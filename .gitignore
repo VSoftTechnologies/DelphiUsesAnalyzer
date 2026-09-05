@@ -1,0 +1,51 @@
+# Compiled source #
+###################
+*.dcu
+*.obj
+*.exe
+*.bpl
+*.bpi
+*.dcp
+*.rsm
+*.stat
+*.map
+
+# Backup files    #
+###################
+*.~*
+
+# IDE Files	  #
+###################
+*.dproj.local
+*.groupproj.local
+*.identcache
+*.dsk
+*.tvsconfig
+*.otares
+*.drc
+*.rc
+*.res
+*.dres
+
+# Output Folders  #
+###################
+/Output
+/Win32
+/Win64
+__history
+/Source/Win32
+/Source/Win64
+/Source/__history
+/Tests/Win32
+/Tests/Win64
+/Tests/Debug
+/Tests/Release
+/Tests/__history
+/Tests/dunitx-results.xml
+Source/__recovery
+__recovery
+
+# Claude          #
+###################
+.claude
+CLAUDE.md
