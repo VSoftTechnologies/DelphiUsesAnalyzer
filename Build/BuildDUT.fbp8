@@ -487,38 +487,6 @@ begin
             varstringchecks = true
           end
         end
-        action.7zip.create
-        begin
-          archivename = %OUTPUTDIR%\\DUT-%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_RELEASE%.%VERSION_BUILD%.zip
-          archivetype = zZip
-          compressionlevel = clNormal
-          compressionmethod = Deflate
-          createsfxarchive = false
-          deleteaftercompression = false
-          enabletimeout = false
-          encryptfilenames = false
-          expandimpersonationtoken = false
-          fileslist = "*.exe" +
-                      ""
-          id = {416E04B3-97F1-418E-A08A-FA1F200BBD7C}
-          ifarchiveexists = exOverwrite
-          impersonateusenetcredonly = false
-          impersonateuser = false
-          logprocessparameters = true
-          multithreaded = false
-          processoraffinity = 0
-          processpriority = tpNormal
-          recurse = zrDefault
-          rootdirectory = %OUTPUTDIR%
-          solidmode = true
-          terminateontimeout = false
-          timeoutlength = 2
-          useaes256 = false
-          useerrordialogmonitor = false
-          usevolumesize = false
-          volumesize = 4000
-          volumesizeunits = m
-        end
         action.continua.iscontinua
         begin
           actiontypeid = {68273E7B-F453-4E54-B343-A52916FB7304}
@@ -560,6 +528,38 @@ begin
             updatemode = SourceHash
             useerrordialogmonitor = false
             workingdir = %OUTPUTDIR%
+          end
+          action.7zip.create
+          begin
+            archivename = %OUTPUTDIR%\\DUT-%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_RELEASE%.%VERSION_BUILD%.zip
+            archivetype = zZip
+            compressionlevel = clNormal
+            compressionmethod = Deflate
+            createsfxarchive = false
+            deleteaftercompression = false
+            enabletimeout = false
+            encryptfilenames = false
+            expandimpersonationtoken = false
+            fileslist = "*.exe" +
+                        ""
+            id = {416E04B3-97F1-418E-A08A-FA1F200BBD7C}
+            ifarchiveexists = exOverwrite
+            impersonateusenetcredonly = false
+            impersonateuser = false
+            logprocessparameters = true
+            multithreaded = false
+            processoraffinity = 0
+            processpriority = tpNormal
+            recurse = zrDefault
+            rootdirectory = %OUTPUTDIR%
+            solidmode = true
+            terminateontimeout = false
+            timeoutlength = 2
+            useaes256 = false
+            useerrordialogmonitor = false
+            usevolumesize = false
+            volumesize = 4000
+            volumesizeunits = m
           end
         end
       end
