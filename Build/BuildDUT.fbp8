@@ -239,7 +239,7 @@ begin
           noconfig = false
           platform = Win32
           platformsdktype = ProjectSDK
-          projectfile = I:\\Github\\VSoftTechnologies\\DelphiUsesAnalyzer\\Tests\\DelphiUsesAnalyzer.Tests.dpr
+          projectfile = %TESTROOT%\\DelphiUsesAnalyzer.Tests.dpr
           regenerateresource = true
           releaseversion = 0
           resourcecompilertype = rcBorland
