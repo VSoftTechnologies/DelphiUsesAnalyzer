@@ -244,7 +244,7 @@ begin
           releaseversion = 0
           resourcecompilertype = rcBorland
           ridloutputsamefolder = true
-          startingdir = I:\\Github\\VSoftTechnologies\\DelphiUsesAnalyzer\\Tests\\
+          startingdir = %TESTROOT%
           timeoutlength = 1
           updatedoffile = false
           updatepackagesource = false
@@ -407,7 +407,7 @@ begin
           releaseversion = 0
           resourcecompilertype = rcBorland
           ridloutputsamefolder = true
-          startingdir = I:\\Github\\VSoftTechnologies\\DelphiUsesAnalyzer\\Source\\
+          startingdir = %SOURCEROOT%\\
           timeoutlength = 1
           updatedoffile = false
           updatepackagesource = false
