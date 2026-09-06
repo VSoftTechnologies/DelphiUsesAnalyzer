@@ -1,0 +1,655 @@
+﻿project
+begin
+  projectid = {ED01FF46-F848-4A4F-B5E7-C9652486B66E}
+  target
+  begin
+    name = Default
+    targetid = {03249161-BCF1-4611-9F79-6007AE1D30C9}
+    rootaction
+    begin
+      action.variables.logvalues
+      begin
+        failifnotdefined = true
+        id = {D8803A3E-7537-414D-A08B-91D263D5B463}
+        logallvariables = false
+        variablestoragestring = "OUTPUTDIR" +
+                                "SOURCEROOT" +
+                                "TESTROOT" +
+                                "WORKSPACE" +
+                                ""
+      end
+      action.propertyset.define
+      begin
+        id = {158564CE-2E5C-422F-B073-77190F60D6B0}
+        propertysetname = VERSIONINFO
+        propertyset.win32.numbers
+        begin
+          majorversion = 1
+          name = VERSIONINFO
+        end
+      end
+      action.propertyset.setvalues
+      begin
+        id = {629FC5BA-EA09-42C1-8F67-2917D14F8ED6}
+        propertysetname = VERSIONINFO
+        setvaluesto = "true" +
+                      "true" +
+                      "%VERSION_BUILD%" +
+                      "" +
+                      "%VERSION_MAJOR%" +
+                      "%VERSION_MINOR%" +
+                      "%VERSION_RELEASE%" +
+                      ""
+        valuestoset = "AutoUpdateFileVersionString\=-1" +
+                      "AutoUpdateProductVersionString\=-1" +
+                      "BuildVersion\=-1" +
+                      "LinkProductVersion\=0" +
+                      "MajorVersion\=-1" +
+                      "MinorVersion\=-1" +
+                      "ReleaseVersion\=-1" +
+                      ""
+      end
+      action.group
+      begin
+        description = Tests
+        id = {E0782982-5EE5-42EC-8E92-26E4A61B599F}
+        action.dpm.restore
+        begin
+          actiontypeid = {17B8180A-B96F-4BA3-BCA1-E2FD9132113C}
+          customactionname = "DPM Restore"
+          enabletimeout = false
+          id = {CC5166BE-1F82-4A92-85B2-B7DD3B878B08}
+          impersonateusenetcredonly = false
+          impersonateuser = false
+          terminateontimeout = true
+          timeoutlength = 2
+          as.projectpath = %TESTROOT%\\TestData\\SampleApp\\SampleApp.dproj
+          as.compilerversion = 13.0
+          as.verbosity = Quiet
+          as.nobanner = True
+        end
+        action.delphi.build
+        begin
+          allowimplicitimport = true
+          alwaysuseconditionalsfromdof = false
+          autoincbuild = true
+          autoupdatefileversion = true
+          autoupdateproductversion = false
+          buildall = true
+          buildversion = 0
+          codepage = 1252
+          compileprojectresources = false
+          compileridl = true
+          configname = Release
+          debugversionnumbers = false
+          delphiversion = Delphi13
+          enabled = false
+          enabletimeout = false
+          eurekalogverboselogging = false
+          frameworktype = VCL
+          hintsaserror = false
+          id = {CD5BCBAD-8E3C-4B40-AF9E-CD660F706539}
+          includecompiledate = false
+          includemanifest = false
+          includeverinfo = false
+          isdebug = false
+          isdll = false
+          isprerelease = false
+          isprivate = false
+          isspecial = false
+          keepcfg = false
+          linkproductversiontofileversion = true
+          locale = 3081
+          majorversion = 0
+          minorversion = 0
+          noconfig = false
+          platform = Win32
+          platformsdktype = ProjectSDK
+          projectfile = %TESTROOT%\\TestData\\SampleApp\\SampleApp.dpr
+          regenerateresource = true
+          releaseversion = 0
+          resourcecompilertype = rcBorland
+          ridloutputsamefolder = true
+          startingdir = I:\\Github\\VSoftTechnologies\\DelphiUsesAnalyzer\\Tests\\TestData\\SampleApp\\
+          timeoutlength = 1
+          updatedoffile = false
+          updatepackagesource = false
+          updateversioninfokeys = false
+          useeurekalogcompiler = false
+          usefastdcccompiler = false
+          useprojectsettings = []
+          usepropertyset = false
+          useversionfromdof = false
+          verboseoutput = false
+          versioninfokeys = "CompanyName\=" +
+                            "FileDescription\=" +
+                            "FileVersion\=0.0.0.0" +
+                            "InternalName\=" +
+                            "LegalCopyright\=" +
+                            "LegalTrademarks\=" +
+                            "OriginalFilename\=" +
+                            "ProductName\=" +
+                            "ProductVersion\=0.0.0.0" +
+                            "Comments\=" +
+                            ""
+          warningsaserror = false
+          workaroundd5bug = false
+          delphi.compileroptions
+          begin
+            alwaysuseconditionalsfromdof = false
+            alwaysusedelphilibrarypath = false
+            alwaysusedofsearchpath = true
+            assertions = true
+            assignableconst = false
+            booleval = false
+            compilerwarnings = "-w-UNSAFE_TYPE\=0" +
+                               "-w-UNSAFE_CODE\=0" +
+                               "-w-UNSAFE_CAST\=0" +
+                               ""
+            consoleapp = false
+            debuginfo = true
+            definitionsonly = true
+            emitruntimetypeinformation = false
+            exportallsymbols = false
+            extendedsyntax = true
+            externaltd32 = true
+            frameworktype = None
+            generatedocumentation = false
+            generatehpp = false
+            hugestrings = true
+            imagebase = 4194304
+            includenamespaces = false
+            includeremotesymbols = false
+            includetd32 = false
+            inlining = inOn
+            iochecking = true
+            librarypath = $(BDSLIB)\\$(Platform)\\release;$(BDSUSERDIR)\\Imports;$(BDSUSERDIR)\\Imports\\$(Platform);$(BDS)\\Imports;$(BDSCOMMONDIR)\\Dcp;$(BDS)\\include;$(BDSCatalogRepository)\\QuickLib-2.5\\;$(BDSCatalogRepository)\\QuickLogger-13\\1.50\\;I:\\madCollection\\madBasic\\BDS37\\win32;I:\\madCollection\\madDisAsm\\BDS37\\win32;I:\\madCollection\\madExcept\\BDS37\\win32;I:\\madCollection\\madExcept\\..\\Plugins\\win32;I:\\madCollection\\madRemote\\BDS37\\win32;I:\\madCollection\\madKernel\\BDS37\\win32;I:\\madCollection\\madSecurity\\BDS37\\win32;I:\\madCollection\\madShell\\BDS37\\win32
+            linkeroutput = 0
+            localsymbols = true
+            mapfile = 0
+            maxstacksize = 1048576
+            minstacksize = 16384
+            namespaceprefixes = System;Xml;Data;Datasnap;Web;Soap;Winapi;System.Win;Data.Win;Web.Win;Soap.Win;Bde;
+            openstrings = true
+            optimisation = true
+            overflowchecking = false
+            rangechecking = false
+            recordfieldalign = fa8
+            referenceinfo = true
+            safedivide = false
+            showhints = true
+            showwarnings = true
+            stackframes = false
+            stringchecks = true
+            typedpointers = false
+            unitaliases = WinTypes\=Windows;WinProcs\=Windows;DbiTypes\=BDE;DbiProcs\=BDE;DbiErrs\=BDE;
+            usedebugdcu = false
+            usepackages = false
+            varstringchecks = true
+          end
+        end
+        action.dpm.restore
+        begin
+          actiontypeid = {17B8180A-B96F-4BA3-BCA1-E2FD9132113C}
+          customactionname = "DPM Restore"
+          enabletimeout = false
+          id = {C0C656E4-29EB-4FFE-9131-893FA8B58095}
+          impersonateusenetcredonly = false
+          impersonateuser = false
+          terminateontimeout = true
+          timeoutlength = 2
+          as.projectpath = %TESTROOT%\\DelphiUsesAnalyzer.Tests.dproj
+          as.compilerversion = 13.0
+          as.verbosity = Quiet
+          as.nobanner = True
+        end
+        action.delphi.build
+        begin
+          allowimplicitimport = true
+          alwaysuseconditionalsfromdof = false
+          autoincbuild = true
+          autoupdatefileversion = true
+          autoupdateproductversion = false
+          buildall = true
+          buildversion = 0
+          codepage = 1252
+          compileprojectresources = false
+          compileridl = true
+          configname = Debug
+          debugversionnumbers = false
+          delphiversion = Delphi13
+          enabletimeout = false
+          eurekalogverboselogging = false
+          frameworktype = VCL
+          hintsaserror = false
+          id = {E880B881-E384-4D91-A4BE-CFAC754D6EB6}
+          includecompiledate = false
+          includemanifest = false
+          includeverinfo = false
+          isdebug = false
+          isdll = false
+          isprerelease = false
+          isprivate = false
+          isspecial = false
+          keepcfg = false
+          linkproductversiontofileversion = true
+          locale = 3081
+          majorversion = 0
+          minorversion = 0
+          noconfig = false
+          platform = Win32
+          platformsdktype = ProjectSDK
+          projectfile = I:\\Github\\VSoftTechnologies\\DelphiUsesAnalyzer\\Tests\\DelphiUsesAnalyzer.Tests.dpr
+          regenerateresource = true
+          releaseversion = 0
+          resourcecompilertype = rcBorland
+          ridloutputsamefolder = true
+          startingdir = I:\\Github\\VSoftTechnologies\\DelphiUsesAnalyzer\\Tests\\
+          timeoutlength = 1
+          updatedoffile = false
+          updatepackagesource = false
+          updateversioninfokeys = false
+          useeurekalogcompiler = false
+          usefastdcccompiler = false
+          useprojectsettings = []
+          usepropertyset = false
+          useversionfromdof = false
+          verboseoutput = false
+          versioninfokeys = "CompanyName\=" +
+                            "FileDescription\=" +
+                            "FileVersion\=0.0.0.0" +
+                            "InternalName\=" +
+                            "LegalCopyright\=" +
+                            "LegalTrademarks\=" +
+                            "OriginalFilename\=" +
+                            "ProductName\=" +
+                            "ProductVersion\=0.0.0.0" +
+                            "Comments\=" +
+                            ""
+          warningsaserror = false
+          workaroundd5bug = false
+          delphi.compileroptions
+          begin
+            alwaysuseconditionalsfromdof = false
+            alwaysusedelphilibrarypath = false
+            alwaysusedofsearchpath = true
+            assertions = true
+            assignableconst = false
+            booleval = false
+            compilerwarnings = "-w-UNSAFE_TYPE\=0" +
+                               "-w-UNSAFE_CODE\=0" +
+                               "-w-UNSAFE_CAST\=0" +
+                               ""
+            consoleapp = false
+            debuginfo = true
+            definitionsonly = true
+            emitruntimetypeinformation = false
+            exportallsymbols = false
+            extendedsyntax = true
+            externaltd32 = true
+            frameworktype = None
+            generatedocumentation = false
+            generatehpp = false
+            hugestrings = true
+            imagebase = 4194304
+            includenamespaces = false
+            includeremotesymbols = false
+            includetd32 = false
+            inlining = inOn
+            iochecking = true
+            librarypath = $(BDSLIB)\\$(Platform)\\release;$(BDSUSERDIR)\\Imports;$(BDSUSERDIR)\\Imports\\$(Platform);$(BDS)\\Imports;$(BDSCOMMONDIR)\\Dcp;$(BDS)\\include;$(BDSCatalogRepository)\\QuickLib-2.5\\;$(BDSCatalogRepository)\\QuickLogger-13\\1.50\\;I:\\madCollection\\madBasic\\BDS37\\win32;I:\\madCollection\\madDisAsm\\BDS37\\win32;I:\\madCollection\\madExcept\\BDS37\\win32;I:\\madCollection\\madExcept\\..\\Plugins\\win32;I:\\madCollection\\madRemote\\BDS37\\win32;I:\\madCollection\\madKernel\\BDS37\\win32;I:\\madCollection\\madSecurity\\BDS37\\win32;I:\\madCollection\\madShell\\BDS37\\win32
+            linkeroutput = 0
+            localsymbols = true
+            mapfile = 0
+            maxstacksize = 1048576
+            minstacksize = 16384
+            namespaceprefixes = System;Xml;Data;Datasnap;Web;Soap;Winapi;System.Win;Data.Win;Web.Win;Soap.Win;Bde;
+            openstrings = true
+            optimisation = true
+            outputdir = %TESTROOT%\\$(CONFIG)\\$(PLATFORM)
+            overflowchecking = false
+            rangechecking = false
+            recordfieldalign = fa8
+            referenceinfo = true
+            safedivide = false
+            showhints = true
+            showwarnings = true
+            stackframes = false
+            stringchecks = true
+            typedpointers = false
+            unitaliases = WinTypes\=Windows;WinProcs\=Windows;DbiTypes\=BDE;DbiProcs\=BDE;DbiErrs\=BDE;
+            usedebugdcu = false
+            usepackages = false
+            varstringchecks = true
+          end
+        end
+        action.dunitx.execute
+        begin
+          continuafailiftestserror = true
+          continuafailiftestsfail = true
+          continuaquiet = true
+          continuaregisterresults = true
+          continuaverbose = false
+          enabletimeout = false
+          expandimpersonationtoken = false
+          failiftestfailures = true
+          id = {A5C421E1-088C-4E8E-8F4E-3EA54ABC438E}
+          impersonateusenetcredonly = false
+          impersonateuser = false
+          logprocessparameters = true
+          processoraffinity = 0
+          processpriority = tpNormal
+          terminateontimeout = false
+          testexecutable = %TESTROOT%\\DEBUG\\Win32\\DelphiUsesAnalyzer.Tests.exe
+          timeoutlength = 2
+          useerrordialogmonitor = false
+          xmlloggertype = nunit
+          xmlreportfile = %OUTPUTDIR%\\DUT-TESTS.xml
+        end
+      end
+      action.group
+      begin
+        description = BUILD
+        id = {54DEE956-FE6F-4ABD-8A79-8E837BA1025F}
+        action.dpm.restore
+        begin
+          actiontypeid = {17B8180A-B96F-4BA3-BCA1-E2FD9132113C}
+          customactionname = "DPM Restore"
+          enabletimeout = false
+          id = {0F759801-A7E2-459D-9B7E-960C3AF3D46F}
+          impersonateusenetcredonly = false
+          impersonateuser = false
+          terminateontimeout = true
+          timeoutlength = 2
+          as.projectpath = %SOURCEROOT%\\DelphiUsesAnalyzer.dproj
+          as.compilerversion = 13.0
+          as.verbosity = Normal
+          as.nobanner = True
+        end
+        action.delphi.build
+        begin
+          allowimplicitimport = true
+          alwaysuseconditionalsfromdof = false
+          autoincbuild = false
+          autoupdatefileversion = true
+          autoupdateproductversion = true
+          buildall = true
+          buildversion = 0
+          codepage = 1252
+          compileprojectresources = false
+          compileridl = true
+          configname = Release
+          debugversionnumbers = false
+          delphiversion = Delphi13
+          enabletimeout = false
+          eurekalogverboselogging = false
+          frameworktype = VCL
+          hintsaserror = false
+          id = {354F1F15-AE17-4B32-A402-F3958367BF86}
+          includecompiledate = false
+          includemanifest = false
+          includeverinfo = true
+          isdebug = false
+          isdll = false
+          isprerelease = false
+          isprivate = false
+          isspecial = false
+          keepcfg = false
+          linkproductversiontofileversion = true
+          locale = 3081
+          majorversion = 1
+          minorversion = 0
+          noconfig = false
+          platform = Win32
+          platformsdktype = ProjectSDK
+          projectfile = %SOURCEROOT%\\DelphiUsesAnalyzer.dpr
+          regenerateresource = true
+          releaseversion = 0
+          resourcecompilertype = rcBorland
+          ridloutputsamefolder = true
+          startingdir = I:\\Github\\VSoftTechnologies\\DelphiUsesAnalyzer\\Source\\
+          timeoutlength = 1
+          updatedoffile = false
+          updatepackagesource = false
+          updateversioninfokeys = false
+          useeurekalogcompiler = false
+          usefastdcccompiler = false
+          useprojectsettings = []
+          usepropertyset = true
+          useversionfromdof = false
+          verboseoutput = false
+          versioninfokeys = "CompanyName\=VSoft Technologies Pty Ltd" +
+                            "FileDescription\=Delphi Uses Analyzer" +
+                            "FileVersion\=1.0.0.4" +
+                            "InternalName\=DUT" +
+                            "LegalCopyright\=VSoft Technologies Pty Ltd" +
+                            "LegalTrademarks\=" +
+                            "OriginalFilename\=" +
+                            "ProductName\=Delphi Uses Analyzer" +
+                            "ProductVersion\=1.0.0.0" +
+                            "Comments\=" +
+                            ""
+          versioninfopropertysetname = VERSIONINFO
+          warningsaserror = false
+          workaroundd5bug = false
+          delphi.compileroptions
+          begin
+            alwaysuseconditionalsfromdof = false
+            alwaysusedelphilibrarypath = false
+            alwaysusedofsearchpath = true
+            assertions = true
+            assignableconst = false
+            booleval = false
+            compilerwarnings = "-w-UNSAFE_TYPE\=0" +
+                               "-w-UNSAFE_CODE\=0" +
+                               "-w-UNSAFE_CAST\=0" +
+                               ""
+            consoleapp = false
+            debuginfo = true
+            definitionsonly = true
+            emitruntimetypeinformation = false
+            exportallsymbols = false
+            extendedsyntax = true
+            externaltd32 = true
+            frameworktype = None
+            generatedocumentation = false
+            generatehpp = false
+            hugestrings = true
+            imagebase = 4194304
+            includenamespaces = false
+            includeremotesymbols = false
+            includetd32 = false
+            inlining = inOn
+            iochecking = true
+            librarypath = $(BDSLIB)\\$(Platform)\\release;$(BDSUSERDIR)\\Imports;$(BDSUSERDIR)\\Imports\\$(Platform);$(BDS)\\Imports;$(BDSCOMMONDIR)\\Dcp;$(BDS)\\include;$(BDSCatalogRepository)\\QuickLib-2.5\\;$(BDSCatalogRepository)\\QuickLogger-13\\1.50\\;I:\\madCollection\\madBasic\\BDS37\\win32;I:\\madCollection\\madDisAsm\\BDS37\\win32;I:\\madCollection\\madExcept\\BDS37\\win32;I:\\madCollection\\madExcept\\..\\Plugins\\win32;I:\\madCollection\\madRemote\\BDS37\\win32;I:\\madCollection\\madKernel\\BDS37\\win32;I:\\madCollection\\madSecurity\\BDS37\\win32;I:\\madCollection\\madShell\\BDS37\\win32
+            linkeroutput = 0
+            localsymbols = true
+            mapfile = 0
+            maxstacksize = 1048576
+            minstacksize = 16384
+            namespaceprefixes = System;Xml;Data;Datasnap;Web;Soap;Winapi;System.Win;Data.Win;Web.Win;Soap.Win;Bde;
+            openstrings = true
+            optimisation = true
+            outputdir = %OUTPUTDIR%
+            overflowchecking = false
+            rangechecking = false
+            recordfieldalign = fa8
+            referenceinfo = true
+            safedivide = false
+            showhints = true
+            showwarnings = true
+            stackframes = false
+            stringchecks = true
+            typedpointers = false
+            unitaliases = WinTypes\=Windows;WinProcs\=Windows;DbiTypes\=BDE;DbiProcs\=BDE;DbiErrs\=BDE;
+            usedebugdcu = false
+            usepackages = false
+            varstringchecks = true
+          end
+        end
+        action.7zip.create
+        begin
+          archivename = %OUTPUTDIR%\\DUT-%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_RELEASE%.%VERSION_BUILD%.zip
+          archivetype = zZip
+          compressionlevel = clNormal
+          compressionmethod = Deflate
+          createsfxarchive = false
+          deleteaftercompression = false
+          enabletimeout = false
+          encryptfilenames = false
+          expandimpersonationtoken = false
+          fileslist = "*.exe" +
+                      ""
+          id = {416E04B3-97F1-418E-A08A-FA1F200BBD7C}
+          ifarchiveexists = exOverwrite
+          impersonateusenetcredonly = false
+          impersonateuser = false
+          logprocessparameters = true
+          multithreaded = false
+          processoraffinity = 0
+          processpriority = tpNormal
+          recurse = zrDefault
+          rootdirectory = %OUTPUTDIR%
+          solidmode = true
+          terminateontimeout = false
+          timeoutlength = 2
+          useaes256 = false
+          useerrordialogmonitor = false
+          usevolumesize = false
+          volumesize = 4000
+          volumesizeunits = m
+        end
+        action.continua.iscontinua
+        begin
+          actiontypeid = {68273E7B-F453-4E54-B343-A52916FB7304}
+          customactionname = "Continua CI - If Running Under Continua"
+          enabletimeout = false
+          id = {9070213A-959E-4716-A26B-69D351B09F35}
+          impersonateusenetcredonly = false
+          impersonateuser = false
+          terminateontimeout = true
+          timeoutlength = 2
+          as.failifrunningunder = False
+          as.succeedifrunningunder = True
+          action.signotaur.sign
+          begin
+            apikey = %SIGNOTAUR-APIKEY%
+            certificatelabel = Backup
+            contentdescription = "Delphi Uses Analyzer"
+            contentdescriptionurl = https://github.com/VSoftTechnologies/DelphiUsesAnalyzer
+            digestalgorithm = SHA384
+            enabletimeout = false
+            expandimpersonationtoken = false
+            fallbacktimestampserverurls = "http://timestamp.digicert.com" +
+                                          ""
+            filespecs = "*.exe" +
+                        ""
+            id = {EB9B42B4-5180-4ECF-BF6A-C686B67AFDE3}
+            ignoreuntrustedroot = false
+            impersonateusenetcredonly = false
+            impersonateuser = false
+            logprocessparameters = true
+            logtiming = false
+            processoraffinity = 0
+            processpriority = tpNormal
+            revocationcheckmode = Online
+            serverurl = %SIGNOTAUR-SERVER%
+            terminateontimeout = false
+            timeoutlength = 2
+            timestampserverurl = https://timestamp.sectigo.com
+            updatemode = SourceHash
+            useerrordialogmonitor = false
+            workingdir = %OUTPUTDIR%
+          end
+        end
+      end
+    end
+  end
+  variable
+  begin
+    canonicalizepath = true
+    defaultvalue = %FBPROJECTDIR%\\..\\Output
+    groupname = DIRECTORIES
+    name = OUTPUTDIR
+    variablescope = vtProject
+    variabletype = btString
+  end
+  variable
+  begin
+    groupname = CodeSigning
+    name = SIGNOTAUR-APIKEY
+    variablescope = vtProject
+  end
+  variable
+  begin
+    groupname = CodeSigning
+    name = SIGNOTAUR-CERTIFICATE
+    variablescope = vtProject
+  end
+  variable
+  begin
+    groupname = CodeSigning
+    name = SIGNOTAUR-SERVER
+    variablescope = vtProject
+    variabletype = btString
+  end
+  variable
+  begin
+    canonicalizepath = true
+    defaultvalue = %FBPROJECTDIR%\\..\\Source
+    groupname = DIRECTORIES
+    name = SOURCEROOT
+    variablescope = vtProject
+    variabletype = btString
+  end
+  variable
+  begin
+    canonicalizepath = true
+    defaultvalue = %FBPROJECTDIR%\\..\\Tests
+    groupname = DIRECTORIES
+    name = TESTROOT
+    variablescope = vtProject
+    variabletype = btString
+  end
+  variable
+  begin
+    defaultvalue = 0
+    groupname = VERSIONINFO
+    name = VERSION_BUILD
+    variablescope = vtProject
+    variabletype = btInteger
+  end
+  variable
+  begin
+    defaultvalue = 1
+    groupname = VERSIONINFO
+    name = VERSION_MAJOR
+    variablescope = vtProject
+    variabletype = btInteger
+  end
+  variable
+  begin
+    defaultvalue = 0
+    groupname = VERSIONINFO
+    name = VERSION_MINOR
+    variablescope = vtProject
+    variabletype = btInteger
+  end
+  variable
+  begin
+    defaultvalue = 0
+    groupname = VERSIONINFO
+    name = VERSION_RELEASE
+    variablescope = vtProject
+    variabletype = btInteger
+  end
+  variable
+  begin
+    canonicalizepath = true
+    defaultvalue = %FBPROJECTDIR%\\..
+    groupname = DIRECTORIES
+    name = WORKSPACE
+    variablescope = vtProject
+    variabletype = btString
+  end
+end

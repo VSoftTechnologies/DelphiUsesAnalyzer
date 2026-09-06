@@ -49,3 +49,9 @@ __recovery
 ###################
 .claude
 CLAUDE.md
+Build/BuildDUT.fbpbrk
+Build/BuildDUT.fbl8
+Build/BuildDUT.fb8lck
+Build/BuildDUT.fbpInf
+Source/DelphiUsesAnalyzer.rsb
+Tests/DelphiUsesAnalyzer.Tests.rsb
