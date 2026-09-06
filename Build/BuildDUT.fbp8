@@ -534,7 +534,6 @@ begin
           action.signotaur.sign
           begin
             apikey = %SIGNOTAUR-APIKEY%
-            certificatelabel = Backup
             contentdescription = "Delphi Uses Analyzer"
             contentdescriptionurl = https://github.com/VSoftTechnologies/DelphiUsesAnalyzer
             digestalgorithm = SHA384
@@ -555,6 +554,7 @@ begin
             revocationcheckmode = Online
             serverurl = %SIGNOTAUR-SERVER%
             terminateontimeout = false
+            thumbprint = %SIGNOTAUR-CERTIFICATE%
             timeoutlength = 2
             timestampserverurl = https://timestamp.sectigo.com
             updatemode = SourceHash
