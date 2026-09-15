@@ -33,6 +33,13 @@ type
     class procedure WriteWarnings(const analysis : IAnalysisResult; const maxWarnings : integer); static;
 
     /// <summary>
+    ///   Every unit that did not resolve, with where it is named. An unresolved unit is a
+    ///   hole in the graph - nothing it uses was read - so it is worth seeing before
+    ///   trusting any answer built on top, and without having to dig it out of the json.
+    /// </summary>
+    class procedure WriteUnresolved(const analysis : IAnalysisResult; const limit : integer); static;
+
+    /// <summary>
     ///   Print the chains from one unit to everything matching a pattern, as a tree.
     ///   Chains share their leading units, so the tree shows where they diverge - which
     ///   is exactly the place worth looking when deciding what to cut. Both why and path
@@ -73,6 +80,7 @@ uses
   VSoft.AnsiConsole,
   DUA.Types,
   DUA.Graph,
+  DUA.Graph.Analysis,
   DUA.Report.Style,
   DUA.Compiler.Versions;
 
@@ -245,7 +253,9 @@ begin
 
   AnsiConsole.MarkupLine('[grey]Edges[/] %d', [analysis.Graph.Edges.Count]);
 
-  if analysis.UnresolvedCount > 0 then
+  if analysis.UnresolvedCount = 1 then
+    AnsiConsole.MarkupLine('[red]1 unit did not resolve[/] [grey]- the search paths are incomplete[/]')
+  else if analysis.UnresolvedCount > 1 then
     AnsiConsole.MarkupLine('[red]%d units did not resolve[/] [grey]- the search paths are incomplete[/]',
       [analysis.UnresolvedCount]);
   if analysis.Warnings.Count = 1 then
@@ -260,6 +270,68 @@ begin
     AnsiConsole.MarkupLine('[grey]Loaded[/]   %s [grey]in %dms[/]', [Safe(loadedFrom), milliseconds])
   else
     AnsiConsole.MarkupLine('[grey]Elapsed[/]  %dms', [milliseconds]);
+end;
+
+class procedure TConsoleReport.WriteUnresolved(const analysis : IAnalysisResult;
+  const limit : integer);
+var
+  unresolved : IReadOnlyList<TUnresolvedUnit>;
+  entry : TUnresolvedUnit;
+  first : TGraphEdge;
+  table : ITable;
+  namedBy : string;
+  at : string;
+  shown : integer;
+begin
+  unresolved := TUnresolved.Find(analysis.Graph);
+  if unresolved.Count = 0 then
+    Exit;
+
+  AnsiConsole.WriteLine;
+  Heading('Unresolved units');
+
+  if unresolved.Count = 1 then
+    AnsiConsole.MarkupLine('[red]1 unit could not be found[/][grey], so nothing it uses was read[/]')
+  else
+    AnsiConsole.MarkupLine('[red]%d units could not be found[/][grey], so nothing they use was read[/]',
+      [unresolved.Count]);
+
+  table := Widgets.Table.WithBorder(TTableBorderKind.Rounded);
+  table.AddColumn('[bold]Unit[/]', TAlignment.Left);
+  table.AddColumn('[bold]Named by[/]', TAlignment.Left);
+  table.AddColumn('[bold]At[/]', TAlignment.Left);
+
+  shown := 0;
+  for entry in unresolved do
+  begin
+    if (limit > 0) and (shown >= limit) then
+      Break;
+    Inc(shown);
+
+    namedBy := '';
+    at := '';
+    // The most certain reference, since that is the one that says whether the unit really
+    // should have been found. The rest are a references command away.
+    if Length(entry.References) > 0 then
+    begin
+      first := entry.References[0];
+      namedBy := Safe(first.FromUnit);
+      if Length(entry.References) > 1 then
+        namedBy := namedBy + Format(' [grey]+%d more[/]', [Length(entry.References) - 1]);
+      at := Format('%s(%d)%s', [Safe(ExtractFileName(first.FileName)), first.Line,
+        GuardLabel(first)]);
+    end;
+
+    table.AddRow(['[red]' + Safe(entry.UnitName) + '[/]', namedBy, at]);
+  end;
+
+  AnsiConsole.WriteLine(table);
+  if shown < unresolved.Count then
+    AnsiConsole.MarkupLine('[grey]... and %d more, use --limit:0 for all[/]',
+      [unresolved.Count - shown]);
+
+  AnsiConsole.MarkupLine('[grey]Add the folder a unit lives in with[/] --searchpath:<folder>');
+  AnsiConsole.MarkupLine('[grey]See every place one is named with[/] references <project> <unit>');
 end;
 
 class procedure TConsoleReport.WriteWarnings(const analysis : IAnalysisResult;

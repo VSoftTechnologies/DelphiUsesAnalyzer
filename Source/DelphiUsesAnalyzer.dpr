@@ -154,6 +154,9 @@ begin
           ExtractFileName(options.ProjectFile))
       else
         TConsoleReport.WriteElapsed(stopwatch.ElapsedMilliseconds, '');
+      // before the warnings, because a unit that did not resolve leaves a hole in every
+      // answer below, where a warning is only a doubt about one line
+      TConsoleReport.WriteUnresolved(analysis, TCommandLineOptions.Limit);
       TConsoleReport.WriteWarnings(analysis, 20);
     end;
 

@@ -280,7 +280,7 @@ unit, because a tree needs a root.
   --searchpath:<a;b>   extra unit search paths
   --deep               descend into the Delphi rtl and vcl sources as well
   --maxpaths:<n>       chains to print per unit for why and path (default 5)
-  --limit:<n>          rows to print per unit, 0 for all (default 50)
+  --limit:<n>          rows to print per list, 0 for all (default 50)
   --depth:<n>          how far down the deps tree to go, 0 for all (default 3)
   --forbid:<a;b>       units check must not reach
   --allow:<a;b>        exceptions to the forbidden units
@@ -336,6 +336,37 @@ Live output only happens when the terminal is interactive. Under a pipe, a redir
 there is no bar and no escape sequences at all - captured output is plain text and the
 colour is dropped automatically. `--quiet` turns the whole lot off.
 
+## Unresolved units
+
+A unit that cannot be found is a hole in the graph: it is recorded, but its own `uses` are
+never read, so nothing below it is known and any answer that would have passed through it
+is missing. When there are any, they are listed after the summary rather than left in the
+json:
+
+```
+── Unresolved units ────────────────────────────────────────────────────────────
+3 units could not be found, so nothing they use was read
+╭─────────────────┬────────────────────┬──────────────────────────────────────────────────────╮
+│ Unit            │ Named by           │ At                                                   │
+├─────────────────┼────────────────────┼──────────────────────────────────────────────────────┤
+│ MyApp.Licensing │ MyApp.Options      │ MyApp.Options.pas(15)                                │
+│ MyApp.Logging   │ MyApp.Core +3 more │ MyApp.Core.pas(10)                                   │
+│ MyApp.Linux     │ MyApp.Platform     │ MyApp.Platform.pas(22) unevaluated: Declared(TLinux) │
+╰─────────────────┴────────────────────┴──────────────────────────────────────────────────────╯
+Add the folder a unit lives in with --searchpath:<folder>
+See every place one is named with references <project> <unit>
+```
+
+Each is shown with the reference that says most about whether it should have been found -
+an unconditional one before one behind a condition, and one behind a condition before one
+we could not evaluate. A unit named only behind an unevaluated `{$IF}` may well be missing
+on purpose, because it belongs to another platform; one named unconditionally is not.
+`references <project> <unit>` lists every other place it is named.
+
+The list follows `--limit`, so `--limit:0` shows all of them, and it comes before the
+output of every command, since every answer is only as complete as the graph. `--quiet`
+turns it off along with the rest of the summary.
+
 ## What it does
 
 - **Resolves units the way the compiler does.** Explicit `in` paths from the `.dpr` first,
@@ -390,7 +421,8 @@ the Delphi installation, or `unresolved`. The console summary folds the program 
 project units, since there is only ever one of it and the header already names it.
 
 A high `unresolved` count means the search paths are not being assembled correctly - it
-should normally be zero.
+should normally be zero, and the console lists them so you do not have to come here to find
+out which.
 
 ## Building
 
@@ -428,12 +460,12 @@ Source/
   DUA.Project.DProj         the dproj reader
   DUA.SearchPath            unit name to file, the way the compiler resolves it
   DUA.Graph                 nodes, edges, both indexes and chain finding
-  DUA.Graph.Analysis        dominators, cycles, reachability and graph diffing
+  DUA.Graph.Analysis        dominators, cycles, reachability, unresolved units and diffing
   DUA.Analyzer              the walk
   DUA.Rules                 the check rules and what breaks them
   DUA.Report.Json           the json output
   DUA.Report.Style          the console vocabulary the reports share
-  DUA.Report.Console        target, summary, progress, why, path and references
+  DUA.Report.Console        target, summary, unresolved, progress, why, path, references
   DUA.Report.Queries        check, cost, deps, cycles and diff
   DUA.Options               the commands and options
 Tests/

@@ -72,6 +72,25 @@ type
                                     const toUnit : string) : integer; static;
   end;
 
+  /// <summary>A unit that could not be found, and every place that names it.</summary>
+  TUnresolvedUnit = record
+    UnitName : string;
+    /// <summary>
+    ///   Most certain first, so the first one is the reference that says most about
+    ///   whether the unit should have been found - then by unit and line.
+    /// </summary>
+    References : TArray<TGraphEdge>;
+  end;
+
+  TUnresolved = record
+  public
+    /// <summary>
+    ///   Every unit that did not resolve, in name order. Each one is a hole in the graph:
+    ///   its own uses were never read, so nothing below it is known.
+    /// </summary>
+    class function Find(const graph : IUnitGraph) : IReadOnlyList<TUnresolvedUnit>; static;
+  end;
+
   /// <summary>What changed between two graphs. Counts are of the whole graph.</summary>
   TGraphDelta = record
     AddedUnits : TArray<string>;
@@ -546,6 +565,54 @@ class function TReach.CountWithoutEdge(const graph : IUnitGraph; const root : st
   const fromUnit : string; const toUnit : string) : integer;
 begin
   result := CountReachable(graph, root, fromUnit, toUnit);
+end;
+
+{ TUnresolved }
+
+class function TUnresolved.Find(const graph : IUnitGraph) : IReadOnlyList<TUnresolvedUnit>;
+var
+  found : IList<TUnresolvedUnit>;
+  references : IList<TGraphEdge>;
+  node : TGraphNode;
+  edge : TGraphEdge;
+  entry : TUnresolvedUnit;
+begin
+  found := TCollections.CreateList<TUnresolvedUnit>;
+  result := found.AsReadOnly;
+
+  for node in graph.Nodes do
+  begin
+    if node.Kind <> ukUnresolved then
+      Continue;
+
+    references := TCollections.CreateList<TGraphEdge>;
+    for edge in graph.EdgesTo(node.Name) do
+      references.Add(edge);
+
+    // A unit named only behind a condition we could not evaluate may be missing for a
+    // good reason - it belongs to another platform, say. One named unconditionally is
+    // not, so that is the reference worth putting in front of someone.
+    references.Sort(
+      function(const left, right : TGraphEdge) : integer
+      begin
+        result := Ord(left.Certainty) - Ord(right.Certainty);
+        if result = 0 then
+          result := CompareText(left.FromUnit, right.FromUnit);
+        if result = 0 then
+          result := left.Line - right.Line;
+      end);
+
+    entry := Default(TUnresolvedUnit);
+    entry.UnitName := node.Name;
+    entry.References := references.ToArray;
+    found.Add(entry);
+  end;
+
+  found.Sort(
+    function(const left, right : TUnresolvedUnit) : integer
+    begin
+      result := CompareText(left.UnitName, right.UnitName);
+    end);
 end;
 
 { TGraphDelta }

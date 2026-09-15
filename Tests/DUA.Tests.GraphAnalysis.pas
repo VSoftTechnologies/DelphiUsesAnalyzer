@@ -81,6 +81,29 @@ type
   end;
 
   [TestFixture]
+  TUnresolvedTests = class
+  private
+    FGraph : IUnitGraph;
+    procedure GivenEdge(const fromUnit : string; const toUnit : string);
+    procedure GivenReference(const fromUnit : string; const toUnit : string;
+                             const certainty : TEdgeCertainty; const line : integer);
+    procedure GivenUnresolved(const unitName : string);
+    function NamesFound : string;
+  public
+    [Setup]
+    procedure Setup;
+
+    [Test] procedure AGraphWithEverythingResolvedHasNone;
+    [Test] procedure OnlyUnresolvedUnitsAreFound;
+    [Test] procedure TheyAreListedInNameOrder;
+    [Test] procedure EveryReferenceToOneIsKept;
+    [Test] procedure TheMostCertainReferenceComesFirst;
+    [Test] procedure ReferencesOfTheSameCertaintyAreInUnitThenLineOrder;
+    [Test] procedure OneNothingReferencesHasNoReferences;
+    [Test] procedure AnEmptyGraphHasNone;
+  end;
+
+  [TestFixture]
   TGraphDiffTests = class
   private
     FBefore : IUnitGraph;
@@ -479,6 +502,177 @@ end;
 
 { TGraphDiffTests }
 
+{ TUnresolvedTests }
+
+procedure TUnresolvedTests.Setup;
+begin
+  FGraph := TUnitGraph.Create;
+end;
+
+procedure TUnresolvedTests.GivenEdge(const fromUnit : string; const toUnit : string);
+begin
+  FGraph.AddEdge(EdgeBetween(fromUnit, toUnit));
+end;
+
+procedure TUnresolvedTests.GivenReference(const fromUnit : string; const toUnit : string;
+  const certainty : TEdgeCertainty; const line : integer);
+var
+  edge : TGraphEdge;
+begin
+  edge := EdgeBetween(fromUnit, toUnit);
+  edge.Certainty := certainty;
+  edge.FileName := fromUnit + '.pas';
+  edge.Line := line;
+  if certainty <> ecUnconditional then
+    edge.Condition := 'SOMETHING';
+  FGraph.AddEdge(edge);
+end;
+
+procedure TUnresolvedTests.GivenUnresolved(const unitName : string);
+begin
+  FGraph.EnsureNode(unitName).Kind := ukUnresolved;
+end;
+
+/// <summary>Renders the unresolved units found as "A,B,C" so a test can assert on the order.</summary>
+function TUnresolvedTests.NamesFound : string;
+var
+  found : IReadOnlyList<TUnresolvedUnit>;
+  index : integer;
+begin
+  found := TUnresolved.Find(FGraph);
+  result := '';
+  for index := 0 to found.Count - 1 do
+  begin
+    if result <> '' then
+      result := result + ',';
+    result := result + found[index].UnitName;
+  end;
+end;
+
+/// <summary>
+///   A new node starts out unresolved, so without this every unit in a test graph would
+///   count. Marking the ones that are meant to be found lets a test say only which units
+///   did not resolve.
+/// </summary>
+procedure MarkResolved(const graph : IUnitGraph; const names : array of string);
+var
+  name : string;
+begin
+  for name in names do
+    graph.EnsureNode(name).Kind := ukProject;
+end;
+
+procedure TUnresolvedTests.AGraphWithEverythingResolvedHasNone;
+begin
+  GivenEdge('MyApp', 'UnitA');
+  MarkResolved(FGraph, ['MyApp', 'UnitA']);
+
+  Assert.AreEqual<integer>(0, TUnresolved.Find(FGraph).Count);
+end;
+
+procedure TUnresolvedTests.OnlyUnresolvedUnitsAreFound;
+begin
+  GivenEdge('MyApp', 'UnitA');
+  GivenEdge('MyApp', 'Missing');
+  MarkResolved(FGraph, ['MyApp', 'UnitA']);
+  GivenUnresolved('Missing');
+
+  Assert.AreEqual('Missing', NamesFound);
+end;
+
+procedure TUnresolvedTests.TheyAreListedInNameOrder;
+begin
+  GivenEdge('MyApp', 'Zebra');
+  GivenEdge('MyApp', 'Apple');
+  GivenEdge('MyApp', 'Mango');
+  MarkResolved(FGraph, ['MyApp']);
+  GivenUnresolved('Zebra');
+  GivenUnresolved('Apple');
+  GivenUnresolved('Mango');
+
+  Assert.AreEqual('Apple,Mango,Zebra', NamesFound);
+end;
+
+procedure TUnresolvedTests.EveryReferenceToOneIsKept;
+var
+  found : IReadOnlyList<TUnresolvedUnit>;
+begin
+  // the point of listing them is being able to go and fix the search path, and every
+  // place that names the unit is a clue to where it was meant to come from
+  GivenEdge('UnitA', 'Missing');
+  GivenEdge('UnitB', 'Missing');
+  GivenEdge('UnitC', 'Missing');
+  MarkResolved(FGraph, ['UnitA', 'UnitB', 'UnitC']);
+  GivenUnresolved('Missing');
+
+  found := TUnresolved.Find(FGraph);
+  Assert.AreEqual<integer>(1, found.Count);
+  Assert.AreEqual<integer>(3, Length(found[0].References));
+end;
+
+procedure TUnresolvedTests.TheMostCertainReferenceComesFirst;
+var
+  found : IReadOnlyList<TUnresolvedUnit>;
+begin
+  // A unit only named behind a condition we could not evaluate may be missing for a
+  // good reason, one used unconditionally is not. The first reference is the one a
+  // report shows, so it has to be the one that says most about the unit.
+  GivenReference('Alpha', 'Missing', ecUnevaluated, 10);
+  GivenReference('Beta', 'Missing', ecConditional, 20);
+  GivenReference('Gamma', 'Missing', ecUnconditional, 30);
+  MarkResolved(FGraph, ['Alpha', 'Beta', 'Gamma']);
+  GivenUnresolved('Missing');
+
+  found := TUnresolved.Find(FGraph);
+  Assert.AreEqual('Gamma', found[0].References[0].FromUnit);
+  Assert.AreEqual('Beta', found[0].References[1].FromUnit);
+  Assert.AreEqual('Alpha', found[0].References[2].FromUnit);
+end;
+
+procedure TUnresolvedTests.ReferencesOfTheSameCertaintyAreInUnitThenLineOrder;
+var
+  found : IReadOnlyList<TUnresolvedUnit>;
+  edge : TGraphEdge;
+begin
+  GivenReference('UnitB', 'Missing', ecUnconditional, 5);
+  GivenReference('UnitA', 'Missing', ecUnconditional, 40);
+
+  // the same unit naming it from both clauses, implementation first in the graph
+  edge := EdgeBetween('UnitA', 'Missing');
+  edge.Section := usImplementation;
+  edge.FileName := 'UnitA.pas';
+  edge.Line := 12;
+  FGraph.AddEdge(edge);
+
+  MarkResolved(FGraph, ['UnitA', 'UnitB']);
+  GivenUnresolved('Missing');
+
+  found := TUnresolved.Find(FGraph);
+  Assert.AreEqual('UnitA', found[0].References[0].FromUnit);
+  Assert.AreEqual(12, found[0].References[0].Line);
+  Assert.AreEqual('UnitA', found[0].References[1].FromUnit);
+  Assert.AreEqual(40, found[0].References[1].Line);
+  Assert.AreEqual('UnitB', found[0].References[2].FromUnit);
+end;
+
+procedure TUnresolvedTests.OneNothingReferencesHasNoReferences;
+var
+  found : IReadOnlyList<TUnresolvedUnit>;
+begin
+  GivenUnresolved('Stranded');
+
+  found := TUnresolved.Find(FGraph);
+  Assert.AreEqual<integer>(1, found.Count);
+  Assert.AreEqual<integer>(0, Length(found[0].References));
+end;
+
+procedure TUnresolvedTests.AnEmptyGraphHasNone;
+begin
+  Assert.AreEqual<integer>(0, TUnresolved.Find(FGraph).Count);
+end;
+
+{ TGraphDiffTests }
+
 procedure TGraphDiffTests.Setup;
 begin
   FBefore := TUnitGraph.Create;
@@ -629,6 +823,7 @@ initialization
   TDUnitX.RegisterTestFixture(TDominatorTests);
   TDUnitX.RegisterTestFixture(TCycleTests);
   TDUnitX.RegisterTestFixture(TReachTests);
+  TDUnitX.RegisterTestFixture(TUnresolvedTests);
   TDUnitX.RegisterTestFixture(TGraphDiffTests);
 
 end.

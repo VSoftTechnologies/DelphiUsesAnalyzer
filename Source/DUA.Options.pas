@@ -496,7 +496,7 @@ begin
     end);
 
   TOptionsRegistry.RegisterOption<integer>('limit', 'l',
-    'Rows to print per unit, 0 for all (default 50)',
+    'Rows to print per list, 0 for all (default 50)',
     procedure(const value : integer)
     begin
       TCommandLineOptions.Limit := value;
