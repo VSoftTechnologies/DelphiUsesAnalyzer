@@ -439,7 +439,7 @@ The scripts look for RAD Studio under Program Files. If yours is elsewhere, poin
 at it first:
 
 ```
-set BDS=D:\Embarcadero\Studio.0
+set BDS="D:\Embarcadero\Studio 37.0"
 ```
 
 Dependencies, all via DPM: `VSoft.DUnitX`, `VSoft.YAML`, `VSoft.CommandLine`,
