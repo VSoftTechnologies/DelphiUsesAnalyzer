@@ -27,6 +27,20 @@ type
     IsSource : boolean;
   end;
 
+/// <summary>
+///   The folders holding the source a dpm package's dcus were built from, given one of
+///   that package's lib folders. Most packages ship their source, but where varies -
+///   at the package root, under Source or Src, and often in subfolders of those - so
+///   rather than guess a name, every folder under the package that has a pas file in it
+///   counts. The lib folder itself is left out, being a search path already.
+///
+///   Without this a unit from a package resolves to its dcu, which cannot be read, and
+///   everything that unit uses is invisible - which is how a console application ends
+///   up linking the vcl with nothing in the graph to explain it.
+/// </summary>
+function PackageSourceFolders(const libFolder : string) : TArray<string>;
+
+type
   IUnitResolver = interface
     ['{5C1A7E38-9D64-4B0F-A2E7-8F3B6D19C042}']
     procedure AddSearchPath(const path : string; const origin : TUnitOrigin);
@@ -106,8 +120,84 @@ function UnitOriginToKind(const origin : TUnitOrigin) : TUnitKind;
 implementation
 
 uses
+  System.Classes,
   System.IOUtils,
   System.SysUtils;
+
+/// <summary>
+///   The package folder a lib folder belongs to, ie the one the source sits beside. A dpm
+///   package is laid out package\version\lib\platform, and some have no platform folder,
+///   so lib can be either of the last two segments. Anywhere else and this is not a
+///   package path, and guessing a root from it would be worse than nothing.
+/// </summary>
+function PackageRootOf(const libFolder : string) : string;
+var
+  folder : string;
+  parent : string;
+begin
+  result := '';
+  folder := ExcludeTrailingPathDelimiter(Trim(libFolder));
+  if folder = '' then
+    Exit;
+
+  if SameText(ExtractFileName(folder), 'lib') then
+    Exit(ExtractFileDir(folder));
+
+  parent := ExtractFileDir(folder);
+  if SameText(ExtractFileName(parent), 'lib') then
+    result := ExtractFileDir(parent);
+end;
+
+function PackageSourceFolders(const libFolder : string) : TArray<string>;
+var
+  root : string;
+  found : TStringList;
+
+  /// <summary>
+  ///   Folders with pas files in them. A package tree is shallow, so the depth limit is
+  ///   only there to make it impossible for a junction loop to spin.
+  /// </summary>
+  procedure Collect(const folder : string; const depth : integer);
+  var
+    child : string;
+  begin
+    if depth > 8 then
+      Exit;
+
+    // the lib folder holds the dcus we are trying to see past, and is a search path already
+    if SameText(ExtractFileName(ExcludeTrailingPathDelimiter(folder)), 'lib') then
+      Exit;
+
+    if Length(TDirectory.GetFiles(folder, '*.pas')) > 0 then
+      found.Add(ExcludeTrailingPathDelimiter(folder));
+
+    for child in TDirectory.GetDirectories(folder) do
+      Collect(child, depth + 1);
+  end;
+
+begin
+  result := nil;
+  root := PackageRootOf(libFolder);
+  if (root = '') or not TDirectory.Exists(root) then
+    Exit;
+
+  found := TStringList.Create;
+  try
+    // a package that ships no source is normal, and simply leaves nothing to add
+    try
+      Collect(root, 0);
+    except
+      // an unreadable folder is not worth failing a whole analysis over
+      on EDirectoryNotFoundException do ;
+      on EInOutError do ;
+    end;
+
+    found.Sort;
+    result := found.ToStringArray;
+  finally
+    found.Free;
+  end;
+end;
 
 function UnitOriginToKind(const origin : TUnitOrigin) : TUnitKind;
 begin

@@ -58,8 +58,43 @@ type
 
     // --- origins ---
     [Test] procedure OriginIsCarriedThroughFromTheSearchPath;
+
     [Test] procedure SearchPathsAreReportedInOrder;
     [Test] procedure AddingTheSamePathTwiceKeepsOnlyTheFirst;
+  end;
+
+  /// <summary>
+  ///   Finding the source a dpm package's dcus were built from. Packages lay their
+  ///   source out in no one way, so these pin each layout seen in a real package cache.
+  /// </summary>
+  [TestFixture]
+  TPackageSourceTests = class
+  private
+    FRoot : string;
+    procedure GivenFile(const relativePath : string);
+    function PathOf(const relativeFolder : string) : string;
+    function FoldersFor(const relativeLibFolder : string) : string;
+  public
+    [Setup]
+    procedure Setup;
+    [TearDown]
+    procedure TearDown;
+
+    // --- the layouts packages actually use ---
+    [Test] procedure SourceBesideLibIsFound;
+    [Test] procedure SourceAtThePackageRootIsFound;
+    [Test] procedure SourceInSubfoldersIsFound;
+    [Test] procedure AnyFolderNameCountsNotJustSource;
+
+    // --- what is left out ---
+    [Test] procedure FoldersWithoutSourceAreLeftOut;
+    [Test] procedure TheLibFolderItselfIsLeftOut;
+    [Test] procedure APackageWithNoSourceGivesNothing;
+
+    // --- what counts as a package path ---
+    [Test] procedure ALibFolderWithNoPlatformStillWorks;
+    [Test] procedure APathWithNoLibInItIsNotAPackage;
+    [Test] procedure AMissingFolderGivesNothing;
   end;
 
 implementation
@@ -330,7 +365,141 @@ begin
     'the first origin should stick, as the earlier path is the one that wins');
 end;
 
+{ TPackageSourceTests }
+
+procedure TPackageSourceTests.Setup;
+begin
+  FRoot := TPath.Combine(TPath.GetTempPath, 'dua-package-' + TGuid.NewGuid.ToString);
+  TDirectory.CreateDirectory(FRoot);
+end;
+
+procedure TPackageSourceTests.TearDown;
+begin
+  if (FRoot <> '') and TDirectory.Exists(FRoot) then
+    TDirectory.Delete(FRoot, true);
+end;
+
+procedure TPackageSourceTests.GivenFile(const relativePath : string);
+var
+  full : string;
+begin
+  full := TPath.Combine(FRoot, relativePath);
+  TDirectory.CreateDirectory(ExtractFilePath(full));
+  TFile.WriteAllText(full, 'unit placeholder;');
+end;
+
+function TPackageSourceTests.PathOf(const relativeFolder : string) : string;
+begin
+  result := TPath.Combine(FRoot, relativeFolder);
+end;
+
+/// <summary>
+///   The folders found, relative to the package root and separated by | so a test can
+///   assert on the whole answer rather than picking at it.
+/// </summary>
+function TPackageSourceTests.FoldersFor(const relativeLibFolder : string) : string;
+var
+  found : TArray<string>;
+  folder : string;
+  relative : string;
+begin
+  result := '';
+  found := PackageSourceFolders(PathOf(relativeLibFolder));
+  for folder in found do
+  begin
+    relative := folder;
+    if relative.StartsWith(FRoot, true) then
+      relative := relative.Substring(Length(FRoot)).TrimLeft([TPath.DirectorySeparatorChar]);
+    if result <> '' then
+      result := result + '|';
+    result := result + relative;
+  end;
+end;
+
+procedure TPackageSourceTests.SourceBesideLibIsFound;
+begin
+  GivenFile('Pkg\1.0.0\lib\Win32\Thing.dcu');
+  GivenFile('Pkg\1.0.0\Source\Thing.pas');
+
+  Assert.AreEqual('Pkg\1.0.0\Source', FoldersFor('Pkg\1.0.0\lib\Win32'));
+end;
+
+procedure TPackageSourceTests.SourceAtThePackageRootIsFound;
+begin
+  // dcpcrypt and nexusdb both ship this way, with the units loose at the root
+  GivenFile('Pkg\1.0.0\lib\Win32\Thing.dcu');
+  GivenFile('Pkg\1.0.0\Thing.pas');
+
+  Assert.AreEqual('Pkg\1.0.0', FoldersFor('Pkg\1.0.0\lib\Win32'));
+end;
+
+procedure TPackageSourceTests.SourceInSubfoldersIsFound;
+begin
+  GivenFile('Pkg\1.0.0\lib\Win32\Thing.dcu');
+  GivenFile('Pkg\1.0.0\Source\Base\Thing.pas');
+  GivenFile('Pkg\1.0.0\Source\Base\Collections\Other.pas');
+
+  Assert.AreEqual('Pkg\1.0.0\Source\Base|Pkg\1.0.0\Source\Base\Collections',
+    FoldersFor('Pkg\1.0.0\lib\Win32'));
+end;
+
+procedure TPackageSourceTests.AnyFolderNameCountsNotJustSource;
+begin
+  // there is no convention to rely on, so the rule is simply "has pas files in it"
+  GivenFile('Pkg\1.0.0\lib\Win32\Thing.dcu');
+  GivenFile('Pkg\1.0.0\Ciphers\Thing.pas');
+
+  Assert.AreEqual('Pkg\1.0.0\Ciphers', FoldersFor('Pkg\1.0.0\lib\Win32'));
+end;
+
+procedure TPackageSourceTests.FoldersWithoutSourceAreLeftOut;
+begin
+  GivenFile('Pkg\1.0.0\lib\Win32\Thing.dcu');
+  GivenFile('Pkg\1.0.0\bpl\Thing.bpl');
+  GivenFile('Pkg\1.0.0\Source\Thing.pas');
+
+  Assert.AreEqual('Pkg\1.0.0\Source', FoldersFor('Pkg\1.0.0\lib\Win32'));
+end;
+
+procedure TPackageSourceTests.TheLibFolderItselfIsLeftOut;
+begin
+  // some packages leave a pas in lib, but lib is a search path already
+  GivenFile('Pkg\1.0.0\lib\Win32\Thing.dcu');
+  GivenFile('Pkg\1.0.0\lib\Win32\Loose.pas');
+  GivenFile('Pkg\1.0.0\Source\Thing.pas');
+
+  Assert.AreEqual('Pkg\1.0.0\Source', FoldersFor('Pkg\1.0.0\lib\Win32'));
+end;
+
+procedure TPackageSourceTests.APackageWithNoSourceGivesNothing;
+begin
+  GivenFile('Pkg\1.0.0\lib\Win32\Thing.dcu');
+  Assert.AreEqual('', FoldersFor('Pkg\1.0.0\lib\Win32'));
+end;
+
+procedure TPackageSourceTests.ALibFolderWithNoPlatformStillWorks;
+begin
+  GivenFile('Pkg\1.0.0\lib\Thing.dcu');
+  GivenFile('Pkg\1.0.0\Source\Thing.pas');
+
+  Assert.AreEqual('Pkg\1.0.0\Source', FoldersFor('Pkg\1.0.0\lib'));
+end;
+
+procedure TPackageSourceTests.APathWithNoLibInItIsNotAPackage;
+begin
+  // guessing a root from any old folder would drag its whole neighbourhood in
+  GivenFile('Pkg\1.0.0\Source\Thing.pas');
+  Assert.AreEqual('', FoldersFor('Pkg\1.0.0\Source'));
+end;
+
+procedure TPackageSourceTests.AMissingFolderGivesNothing;
+begin
+  Assert.AreEqual('', FoldersFor('NoSuchPkg\1.0.0\lib\Win32'));
+  Assert.AreEqual<integer>(0, Length(PackageSourceFolders('')));
+end;
+
 initialization
   TDUnitX.RegisterTestFixture(TUnitResolverTests);
+  TDUnitX.RegisterTestFixture(TPackageSourceTests);
 
 end.

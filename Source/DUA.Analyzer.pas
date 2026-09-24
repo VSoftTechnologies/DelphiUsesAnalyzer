@@ -350,6 +350,7 @@ var
   candidates : string;
   sourceFile : string;
   searchFolder : string;
+  packageSource : string;
 
   procedure Report(const phase : TAnalyzerPhase);
   begin
@@ -500,7 +501,15 @@ begin
     searchFolder := TPath.GetFullPath(searchFolder);
     // a dpm package path lands here too, and is worth telling apart in the output
     if searchFolder.ToLower.Contains('package_cache') or searchFolder.ToLower.Contains('.dpm') then
-      AddSearchFolder(searchFolder, uoPackage)
+    begin
+      AddSearchFolder(searchFolder, uoPackage);
+      // A package search path points at the dcus, which cannot be read - so whatever a
+      // package unit uses would be invisible, and a console application can end up
+      // linking the vcl with nothing in the graph to explain it. Most packages ship the
+      // source those dcus were built from, so look for it and read that instead.
+      for packageSource in PackageSourceFolders(searchFolder) do
+        AddSearchFolder(packageSource, uoPackage);
+    end
     else
       AddSearchFolder(searchFolder, uoProject);
   end;

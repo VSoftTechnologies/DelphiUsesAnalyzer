@@ -377,8 +377,15 @@ turns it off along with the rest of the summary.
 - **Reads the `.dproj` like msbuild.** Property groups in document order with their
   conditions honoured, so config and platform inheritance comes out right, including the
   `$(DCC_Namespace)` self-reference idiom every dproj uses.
-- **Honours DPM.** `$(DPMSearch)` is expanded, so units from packages resolve and are
-  tagged `package` in the output.
+- **Honours DPM, and reads package source.** `$(DPMSearch)` is expanded, so units from
+  packages resolve and are tagged `package` in the output. A package's search path points
+  at its compiled `.dcu` files, which cannot be read, so on its own that would hide
+  everything a package unit uses - which is exactly how a console application ends up
+  linking the vcl with nothing in the graph to explain it. Most packages ship the source
+  their dcus were built from, so the package folder is searched for it and the source is
+  read instead. Packages lay their source out in no one way - under `Source`, at the
+  package root, in subfolders - so every folder in the package with a `.pas` in it counts,
+  bar `lib` itself.
 - **Evaluates conditionals against the target, not the host.** `{$IF CompilerVersion >= 36}`
   is judged against the Delphi the analysed project targets, not the one that built this
   tool. `{$I}` includes are followed so the define set is right.
@@ -500,9 +507,15 @@ needs to be run any way other than the obvious one.
 
 ## Known limits
 
-- Units inside a DPM package resolve to the `.dcu` in the package's `lib` folder, which is
-  what the compiler sees, so the walk stops there rather than descending into the package's
-  own dependencies.
+- A DPM package that ships no source still resolves to its `.dcu`, and the walk stops
+  there. So does a library that is not a DPM package but is only on the search path as
+  dcus, however much source sits beside them - madExcept, installed the usual way, is one.
+  Add its source folder with `--searchpath` to see inside it.
+- A package's source is read with the consuming project's defines and unit scope names,
+  not the ones the package was built with. The linker uses the dcu, so when those differ
+  the graph can disagree with the map file. The usual sign is a package unit naming a bare
+  `Graphics` or `Forms` that shows up as unresolved: the package was built with `Vcl` in
+  its unit scopes, and your console project quite rightly does not have it.
 - Unit scope resolution does not yet try the referencing unit's own namespace first, which
   the compiler does before falling back to the project scope list.
 - The project wide `cost` ranking is much less use on a project whose `.dpr` names every
