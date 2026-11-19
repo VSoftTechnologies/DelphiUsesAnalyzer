@@ -31,6 +31,12 @@ type
     class var OutputFile : string;
     class var Deep : boolean;
     class var Quiet : boolean;
+    /// <summary>
+    ///   Print locations as full paths, and the file each unit a report is about resolved
+    ///   to. Without it a location is just a file name, which cannot tell two copies of
+    ///   the same unit apart.
+    /// </summary>
+    class var FullPaths : boolean;
     class var MaxPaths : integer;
     class var Limit : integer;
     /// <summary>How far down the deps tree to go. 0 means all of it.</summary>
@@ -112,6 +118,7 @@ begin
   OutputFile := '';
   Deep := false;
   Quiet := false;
+  FullPaths := false;
   MaxPaths := 5;
   Limit := 50;
   Depth := 3;
@@ -485,6 +492,14 @@ begin
     procedure(const value : boolean)
     begin
       TCommandLineOptions.Quiet := value;
+    end);
+  option.HasValue := false;
+
+  option := TOptionsRegistry.RegisterOption<boolean>('fullpaths', '',
+    'Show full file paths, and the file each unit resolved to',
+    procedure(const value : boolean)
+    begin
+      TCommandLineOptions.FullPaths := value;
     end);
   option.HasValue := false;
 

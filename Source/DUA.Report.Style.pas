@@ -58,6 +58,31 @@ function FileNameOnly(const path : string) : string;
 /// </summary>
 procedure WriteNotInGraph(const pattern : string);
 
+/// <summary>
+///   Whether files are written out in full. One setting for every report, made once
+///   before any of them run - a bare file name cannot tell two copies of a unit apart.
+/// </summary>
+procedure SetFullPaths(const value : boolean);
+function FullPaths : boolean;
+
+/// <summary>
+///   Where something was written, as File.pas(12), or with the whole path when full paths
+///   are on. Escaped, so it can go straight into markup.
+/// </summary>
+function SourceLocation(const fileName : string; const line : integer) : string;
+
+/// <summary>
+///   The file a unit resolved to, escaped, for the units a report is about. Empty when
+///   full paths are off or the unit never resolved to a file.
+/// </summary>
+function ResolvedFile(const node : TGraphNode) : string;
+
+/// <summary>
+///   The line under a unit a report is about, naming the file it resolved to. Writes
+///   nothing when full paths are off or the unit has no file.
+/// </summary>
+procedure WriteResolvedFile(const node : TGraphNode; const indent : string);
+
 implementation
 
 uses
@@ -123,9 +148,8 @@ begin
   for edge in graph.EdgesTo(toUnit) do
     if SameText(edge.FromUnit, fromUnit) then
     begin
-      result := Format(' [grey]%s %s(%d)[/]',
-        [Safe(UsesSectionToString(edge.Section)), Safe(ExtractFileName(edge.FileName)),
-         edge.Line]);
+      result := Format(' [grey]%s %s[/]',
+        [Safe(UsesSectionToString(edge.Section)), SourceLocation(edge.FileName, edge.Line)]);
       result := result + GuardLabel(edge);
       Exit;
     end;
@@ -139,6 +163,44 @@ begin
   else
     AnsiConsole.MarkupLine('[yellow]%s[/] is not in the dependency graph at all.',
       [Safe(pattern)]);
+end;
+
+var
+  showFullPaths : boolean = false;
+
+procedure SetFullPaths(const value : boolean);
+begin
+  showFullPaths := value;
+end;
+
+function FullPaths : boolean;
+begin
+  result := showFullPaths;
+end;
+
+function SourceLocation(const fileName : string; const line : integer) : string;
+begin
+  if showFullPaths then
+    result := Format('%s(%d)', [Safe(fileName), line])
+  else
+    result := Format('%s(%d)', [Safe(FileNameOnly(fileName)), line]);
+end;
+
+function ResolvedFile(const node : TGraphNode) : string;
+begin
+  if showFullPaths and (node <> nil) then
+    result := Safe(node.FileName)
+  else
+    result := '';
+end;
+
+procedure WriteResolvedFile(const node : TGraphNode; const indent : string);
+var
+  fileName : string;
+begin
+  fileName := ResolvedFile(node);
+  if fileName <> '' then
+    AnsiConsole.MarkupLine(indent + '[grey]' + fileName + '[/]');
 end;
 
 end.

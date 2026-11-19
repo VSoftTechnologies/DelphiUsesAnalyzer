@@ -323,7 +323,6 @@ var
   right : string;
   operation : TConditionTokenKind;
 begin
-  result := false;
 
   if Current.Kind = ctLParen then
   begin

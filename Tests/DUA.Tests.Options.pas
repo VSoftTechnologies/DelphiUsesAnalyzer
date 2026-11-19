@@ -84,11 +84,13 @@ type
     [Test] procedure DepthIsCollected;
     [Test] procedure RulesComeFromSwitches;
     [Test] procedure AnAllowSwitchExcusesAForbidSwitch;
+    [Test] procedure FullPathsIsASwitch;
 
     // --- defaults ---
     [Test] procedure MaxPathsDefaultsToFive;
     [Test] procedure LimitDefaultsToFifty;
     [Test] procedure DepthDefaultsToThree;
+    [Test] procedure FullPathsDefaultsToOff;
   end;
 
 implementation
@@ -497,6 +499,18 @@ procedure TCommandLineTests.LimitDefaultsToFifty;
 begin
   Parse(['references', 'MyApp.dproj', 'Vcl.Forms']);
   Assert.AreEqual(50, TCommandLineOptions.Limit);
+end;
+
+procedure TCommandLineTests.FullPathsIsASwitch;
+begin
+  Assert.AreEqual('why', Parse(['why', 'MyApp.dproj', 'Vcl.Forms', '--fullpaths']));
+  Assert.IsTrue(TCommandLineOptions.FullPaths);
+end;
+
+procedure TCommandLineTests.FullPathsDefaultsToOff;
+begin
+  Parse(['why', 'MyApp.dproj', 'Vcl.Forms']);
+  Assert.IsFalse(TCommandLineOptions.FullPaths);
 end;
 
 initialization

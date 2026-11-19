@@ -36,6 +36,7 @@ uses
   DUA.Tests.Types in 'DUA.Tests.Types.pas',
   DUA.Tests.Options in 'DUA.Tests.Options.pas',
   DUA.Tests.ReportJson in 'DUA.Tests.ReportJson.pas',
+  DUA.Tests.ReportStyle in 'DUA.Tests.ReportStyle.pas',
   DUA.Tests.Rules in 'DUA.Tests.Rules.pas',
   DUA.Tests.Analyzer in 'DUA.Tests.Analyzer.pas',
   DUA.Tests.Graph in 'DUA.Tests.Graph.pas',

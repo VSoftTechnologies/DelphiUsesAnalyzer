@@ -58,6 +58,8 @@ type
 
     // --- origins ---
     [Test] procedure OriginIsCarriedThroughFromTheSearchPath;
+    [Test] procedure AUnitBesideItsUserTakesTheOriginOfThatFolder;
+    [Test] procedure AUnitBesideItsUserOffTheSearchPathIsAProjectUnit;
 
     [Test] procedure SearchPathsAreReportedInOrder;
     [Test] procedure AddingTheSamePathTwiceKeepsOnlyTheFirst;
@@ -343,6 +345,27 @@ begin
 
   Assert.AreEqual(Ord(uoPackage), Ord(Resolve('FromPackage').Origin));
   Assert.AreEqual(Ord(uoRTL), Ord(Resolve('FromRtl').Origin));
+end;
+
+procedure TUnitResolverTests.AUnitBesideItsUserTakesTheOriginOfThatFolder;
+begin
+  // a package unit using its neighbour finds it in its own folder before the search
+  // paths, and that neighbour is no less a package unit for being found that way
+  GivenFile('packages\User.pas');
+  GivenFile('packages\Neighbour.pas');
+  FResolver.AddSearchPath(PathOf('packages'), uoPackage);
+
+  Assert.AreEqual(Ord(uoPackage),
+    Ord(ResolveFrom('Neighbour', TPath.Combine(PathOf('packages'), 'User.pas')).Origin));
+end;
+
+procedure TUnitResolverTests.AUnitBesideItsUserOffTheSearchPathIsAProjectUnit;
+begin
+  GivenFile('src\User.pas');
+  GivenFile('src\Neighbour.pas');
+
+  Assert.AreEqual(Ord(uoProject),
+    Ord(ResolveFrom('Neighbour', TPath.Combine(PathOf('src'), 'User.pas')).Origin));
 end;
 
 procedure TUnitResolverTests.SearchPathsAreReportedInOrder;

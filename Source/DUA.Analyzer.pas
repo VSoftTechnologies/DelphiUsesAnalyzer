@@ -359,11 +359,25 @@ var
   end;
 
   procedure AddSearchFolder(const folder : string; const origin : TUnitOrigin);
+  var
+    fullFolder : string;
   begin
     if Trim(folder) = '' then
       Exit;
-    analysis.Resolver.AddSearchPath(folder, origin);
-    includes.AddFolder(folder);
+
+    // One spelling per folder. A file is named after the folder it was found in, so a
+    // folder reached as both Lib and Other\..\Lib would make one file look like two
+    // copies of a unit.
+    try
+      fullFolder := TPath.GetFullPath(Trim(folder));
+    except
+      // a library path entry the registry left malformed is still worth searching
+      on Exception do
+        fullFolder := Trim(folder);
+    end;
+
+    analysis.Resolver.AddSearchPath(fullFolder, origin);
+    includes.AddFolder(fullFolder);
   end;
 
 begin
@@ -533,6 +547,8 @@ var
   scanner : IUnitScanner;
   pending : IQueue<string>;
   scanned : ISet<string>;
+  /// <summary>Unit and file pairs already warned about, so each copy is reported once.</summary>
+  otherCopies : ISet<string>;
   scanCount : integer;
   rootNode : TGraphNode;
 
@@ -540,6 +556,27 @@ var
   begin
     if Assigned(options.OnProgress) then
       options.OnProgress(phase, scanCount, pending.Count, currentUnit);
+  end;
+
+  /// <summary>
+  ///   A reference found a different file for a unit the graph already has. A unit's own
+  ///   folder is searched before the search paths, so two copies of a unit can each be
+  ///   found from somewhere. The graph holds one node per unit, so the first copy stays,
+  ///   and this one is said out loud rather than quietly swapped in or dropped.
+  /// </summary>
+  procedure WarnAboutOtherCopy(const node : TGraphNode; const otherFile : string;
+                               const usesEntry : TUsesEntry);
+  var
+    key : string;
+  begin
+    key := UpperCase(node.Name + '|' + otherFile);
+    if otherCopies.Contains(key) then
+      Exit;
+    otherCopies.Add(key);
+
+    analysis.Warn(usesEntry.FileName, usesEntry.Line,
+      Format('%s resolves to %s from here, but to %s where it was first found - the graph uses the first',
+        [node.Name, otherFile, node.FileName]));
   end;
 
   /// <summary>
@@ -603,19 +640,27 @@ var
         // the node owns the canonical spelling, so an edge always names it exactly -
         // source files spell the same unit several ways and the graph should not
         targetName := targetNode.Name;
-        targetNode.FileName := resolved.FileName;
-        targetNode.Kind := UnitOriginToKind(resolved.Origin);
 
         // remember the source said Classes where the compiler means System.Classes
         if not SameText(usesEntry.UnitName, targetName) and
            not targetNode.Aliases.Contains(usesEntry.UnitName) then
           targetNode.Aliases.Add(usesEntry.UnitName);
 
-        // rtl and vcl units are recorded but not opened: their internals are not
-        // something anyone can act on, and they multiply the graph enormously
-        if resolved.IsSource and (options.Deep or (resolved.Origin <> uoRTL)) and
-           not scanned.Contains(UpperCase(targetName)) then
-          pending.Enqueue(targetName);
+        // The first file found is the one the graph keeps, reads and reports. Letting a
+        // later one replace it would report one file while edges came from another.
+        if targetNode.FileName = '' then
+        begin
+          targetNode.FileName := resolved.FileName;
+          targetNode.Kind := UnitOriginToKind(resolved.Origin);
+
+          // rtl and vcl units are recorded but not opened: their internals are not
+          // something anyone can act on, and they multiply the graph enormously
+          if resolved.IsSource and (options.Deep or (resolved.Origin <> uoRTL)) and
+             not scanned.Contains(UpperCase(targetName)) then
+            pending.Enqueue(targetName);
+        end
+        else if not SameText(targetNode.FileName, resolved.FileName) then
+          WarnAboutOtherCopy(targetNode, resolved.FileName, usesEntry);
       end
       else
         analysis.Graph.EnsureNode(targetName).Kind := ukUnresolved;
@@ -663,6 +708,7 @@ begin
   scanCount := 0;
   pending := TCollections.CreateQueue<string>;
   scanned := TCollections.CreateSet<string>;
+  otherCopies := TCollections.CreateSet<string>;
   scanner := TUnitScanner.Create(analysis.IncludeResolver);
 
   Report(apScanning, '');

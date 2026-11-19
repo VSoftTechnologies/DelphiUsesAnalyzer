@@ -135,6 +135,8 @@ begin
     end;
 
     options := TCommandLineOptions.ToAnalyzerOptions;
+    // one setting for every report, so it has to be made before the first of them
+    SetFullPaths(TCommandLineOptions.FullPaths);
 
     stopwatch := TStopwatch.StartNew;
     fromSavedGraph := SameText(ExtractFileExt(options.ProjectFile), '.json');

@@ -318,8 +318,7 @@ begin
       namedBy := Safe(first.FromUnit);
       if Length(entry.References) > 1 then
         namedBy := namedBy + Format(' [grey]+%d more[/]', [Length(entry.References) - 1]);
-      at := Format('%s(%d)%s', [Safe(ExtractFileName(first.FileName)), first.Line,
-        GuardLabel(first)]);
+      at := SourceLocation(first.FileName, first.Line) + GuardLabel(first);
     end;
 
     table.AddRow(['[red]' + Safe(entry.UnitName) + '[/]', namedBy, at]);
@@ -381,15 +380,18 @@ var
   index : integer;
   detail : string;
   name : string;
+  matched : TGraphNode;
+  fileName : string;
 
-  function IsATarget(const unitName : string) : boolean;
+  /// <summary>The matched unit with this name, or nil when it is only on the way to one.</summary>
+  function TargetNamed(const unitName : string) : TGraphNode;
   var
     candidate : TGraphNode;
   begin
     for candidate in targets do
       if SameText(candidate.Name, unitName) then
-        Exit(true);
-    result := false;
+        Exit(candidate);
+    result := nil;
   end;
 
 begin
@@ -437,8 +439,17 @@ begin
         if not nodesByPrefix.TryGetValue(prefix, child) then
         begin
           detail := StepLabel(analysis.Graph, chain[index - 1], chain[index]);
-          if IsATarget(chain[index]) then
-            child := parent.AddNode(Format('[bold yellow]%s[/]%s', [Safe(chain[index]), detail]))
+          matched := TargetNamed(chain[index]);
+          if matched <> nil then
+          begin
+            // A unit on the way to a target has its file named by the next step down,
+            // since that step was written in it. A target has no step below it, so with
+            // full paths its own file goes on a line of its own.
+            fileName := ResolvedFile(matched);
+            if fileName <> '' then
+              detail := detail + sLineBreak + '[grey]' + fileName + '[/]';
+            child := parent.AddNode(Format('[bold yellow]%s[/]%s', [Safe(chain[index]), detail]));
+          end
           else
             child := parent.AddNode(Safe(chain[index]) + detail);
           nodesByPrefix[prefix] := child;
@@ -546,6 +557,7 @@ begin
     else
       AnsiConsole.MarkupLine('[bold yellow]%s[/] [grey]is referenced %d times[/]',
         [Safe(target.Name), arriving.Count]);
+    WriteResolvedFile(target, '');
 
     // by referencing unit, so the same unit's interface and implementation sit together
     ordered := TCollections.CreateList<TGraphEdge>;
@@ -575,7 +587,7 @@ begin
       guard := GuardLabel(edge);
 
       table.AddRow([Safe(edge.FromUnit), ShortSection(edge.Section),
-        Format('%s(%d)%s', [Safe(ExtractFileName(edge.FileName)), edge.Line, guard])]);
+        SourceLocation(edge.FileName, edge.Line) + guard]);
     end;
 
     AnsiConsole.WriteLine(table);

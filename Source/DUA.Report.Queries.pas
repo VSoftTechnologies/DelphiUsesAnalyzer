@@ -78,7 +78,10 @@ begin
   end;
 end;
 
-/// <summary>Where a dependency was written, as "File.pas(12)", or empty when unknown.</summary>
+/// <summary>
+///   Where a dependency was written, as "File.pas(12)", or empty when unknown. Already
+///   escaped, since a full path can have a bracket in it.
+/// </summary>
 function WhereWritten(const graph : IUnitGraph; const fromUnit : string;
   const toUnit : string) : string;
 var
@@ -87,7 +90,7 @@ begin
   result := '';
   for edge in graph.EdgesTo(toUnit) do
     if SameText(edge.FromUnit, fromUnit) then
-      Exit(Format('%s(%d)', [ExtractFileName(edge.FileName), edge.Line]));
+      Exit(SourceLocation(edge.FileName, edge.Line));
 end;
 
 { check }
@@ -187,9 +190,10 @@ begin
 
       if via <> '' then
         AnsiConsole.MarkupLine('      %s [grey]via[/] %s [grey]%s[/]',
-          [Safe(node.Name), Safe(via), Safe(detail)])
+          [Safe(node.Name), Safe(via), detail])
       else
-        AnsiConsole.MarkupLine('      %s [grey]%s[/]', [Safe(node.Name), Safe(detail)]);
+        AnsiConsole.MarkupLine('      %s [grey]%s[/]', [Safe(node.Name), detail]);
+      WriteResolvedFile(node, '        ');
     end;
   end;
 
@@ -274,7 +278,7 @@ begin
       Break;
     Inc(shown);
     table.AddRow([Safe(row.Target), IntToStr(row.Exclusive), IntToStr(row.Total),
-                  Safe(row.Where)]);
+                  row.Where]);
   end;
 
   AnsiConsole.WriteLine(table);
@@ -321,6 +325,9 @@ begin
   table.AddColumn('[bold]Unit[/]', TAlignment.Left);
   table.AddColumn('[bold]Exclusive[/]', TGridColumnWidth.Fixed, 9, TAlignment.Right);
   table.AddColumn('[bold]Source[/]', TGridColumnWidth.Fixed, 10, TAlignment.Left);
+  // every row is a unit the ranking is about, so each gets its file
+  if FullPaths then
+    table.AddColumn('[bold]File[/]', TAlignment.Left);
 
   shown := 0;
   for node in ranked do
@@ -328,8 +335,12 @@ begin
     if (limit > 0) and (shown >= limit) then
       Break;
     Inc(shown);
-    table.AddRow([Safe(node.Name), IntToStr(dominators.ExclusiveReach(node.Name)),
-                  UnitKindToString(node.Kind)]);
+    if FullPaths then
+      table.AddRow([Safe(node.Name), IntToStr(dominators.ExclusiveReach(node.Name)),
+                    UnitKindToString(node.Kind), ResolvedFile(node)])
+    else
+      table.AddRow([Safe(node.Name), IntToStr(dominators.ExclusiveReach(node.Name)),
+                    UnitKindToString(node.Kind)]);
   end;
 
   AnsiConsole.WriteLine(table);
@@ -368,6 +379,7 @@ begin
   begin
     AnsiConsole.WriteLine;
     AnsiConsole.MarkupLine('[bold yellow]%s[/]', [Safe(target.Name)]);
+    WriteResolvedFile(target, '');
     WriteCostOfUnit(analysis, target.Name, limit);
   end;
 end;
@@ -456,6 +468,7 @@ begin
     else
       AnsiConsole.MarkupLine('[bold yellow]%s[/] [grey]pulls in %d units[/]',
         [Safe(target.Name), total]);
+    WriteResolvedFile(target, '');
 
     if total = 0 then
       Continue;
@@ -537,8 +550,7 @@ begin
         if SameText(edge.FromUnit, trip[index]) then
         begin
           section := ShortSection(edge.Section);
-          where := Format('%s(%d)%s',
-            [ExtractFileName(edge.FileName), edge.Line, GuardLabel(edge)]);
+          where := SourceLocation(edge.FileName, edge.Line) + GuardLabel(edge);
           Break;
         end;
 
@@ -604,10 +616,10 @@ begin
     shown := limit;
 
   for index := 0 to shown - 1 do
-    AnsiConsole.MarkupLine('  %s [grey]uses[/] %s [grey]%s %s(%d)[/]',
+    AnsiConsole.MarkupLine('  %s [grey]uses[/] %s [grey]%s %s[/]',
       [Safe(edges[index].FromUnit), Safe(edges[index].ToUnit),
        ShortSection(edges[index].Section),
-       Safe(ExtractFileName(edges[index].FileName)), edges[index].Line]);
+       SourceLocation(edges[index].FileName, edges[index].Line)]);
 
   if shown < Length(edges) then
     AnsiConsole.MarkupLine('  [grey]... and %d more, use --limit:0 for all[/]',

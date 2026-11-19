@@ -292,7 +292,6 @@ function TProjectInfo.GetProperties(const config : string; const platform : stri
 var
   properties : IMSBuildProperties;
   group : TPropertyGroupDefinition;
-  definition : TPropertyDefinition;
   key : string;
 begin
   key := UpperCase(config + '|' + platform);

@@ -285,6 +285,7 @@ unit, because a tree needs a root.
   --forbid:<a;b>       units check must not reach
   --allow:<a;b>        exceptions to the forbidden units
   --rules:<file>       a file of check rules, one unit name or glob per line
+  --fullpaths          full file paths, and the file each unit resolved to
   --quiet              only report errors
 ```
 
@@ -367,13 +368,52 @@ The list follows `--limit`, so `--limit:0` shows all of them, and it comes befor
 output of every command, since every answer is only as complete as the graph. `--quiet`
 turns it off along with the rest of the summary.
 
+## Full paths and duplicate units
+
+A location is normally just a file name and a line, which is enough to find it but not
+enough when the same unit exists in two folders. `--fullpaths` writes every location in
+full, and adds the file each unit a report is about resolved to:
+
+```
+DelphiUsesAnalyzer why MyApp.dproj MyApp.Utils --fullpaths
+```
+
+```
+── Why MyApp.Utils ─────────────────────────────────────────────────────────────
+MyApp
+└── MyApp.Core program C:\src\MyApp\MyApp.dpr(9)
+    └── MyApp.Utils interface C:\src\MyApp\Core\MyApp.Core.pas(8)
+        C:\src\MyApp\Core\MyApp.Utils.pas
+```
+
+A unit on the way to the target is named by the step below it, since that step was
+written in it. The target has no step below it, so its file gets a line of its own.
+`references`, `deps` and `cost` put it under the unit's name, `check` under each unit
+that broke a rule, and the project wide `cost` ranking gains a `File` column.
+
+The graph holds one node per unit, so a unit is the first file found for it. That
+matters because a unit's own folder is searched before the search paths, so two units
+in different folders can each find a different copy of a third. When a later reference
+finds a different file, the graph keeps the first and says so, once per copy:
+
+```
+C:\src\MyApp\Reports\MyApp.Reports.pas(11) MyApp.Utils resolves to
+C:\src\MyApp\Reports\MyApp.Utils.pas from here, but to C:\src\MyApp\Core\MyApp.Utils.pas
+where it was first found - the graph uses the first
+```
+
+Full paths are long, and captured output is laid out for 80 columns, so under a pipe or
+a redirect they wrap. The json from `--output` always has them in full.
+
 ## What it does
 
 - **Resolves units the way the compiler does.** Explicit `in` paths from the `.dpr` first,
   then the referencing unit's own folder, then the search paths in order. Unqualified and
   partially qualified names are resolved through the project's unit scope names, so
   `uses Classes` finds `System.Classes` and `uses Generics.Defaults` finds
-  `System.Generics.Defaults`.
+  `System.Generics.Defaults`. The first file found for a unit is the one read and
+  reported; a later reference that finds another copy is warned about rather than
+  quietly swapped in.
 - **Reads the `.dproj` like msbuild.** Property groups in document order with their
   conditions honoured, so config and platform inheritance comes out right, including the
   `$(DCC_Namespace)` self-reference idiom every dproj uses.

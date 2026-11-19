@@ -86,6 +86,11 @@ type
     FExplicitUnits : IDictionary<string, string>;
     /// <summary>Listings of folders that are not search paths, ie a referencing unit's own.</summary>
     FFolderIndexes : IDictionary<string, IDictionary<string, string>>;
+    /// <summary>
+    ///   Each search path's origin by folder, so a unit found beside the unit using it
+    ///   is labelled for where that folder came from rather than always as project.
+    /// </summary>
+    FFolderOrigins : IDictionary<string, TUnitOrigin>;
     FCandidateCache : IDictionary<string, TCandidates>;
     /// <summary>
     ///   What the search paths answered for a name and extension. The search paths do
@@ -225,6 +230,7 @@ begin
   FNamespaces := TCollections.CreateList<string>;
   FExplicitUnits := TCollections.CreateDictionary<string, string>;
   FFolderIndexes := TCollections.CreateDictionary<string, IDictionary<string, string>>;
+  FFolderOrigins := TCollections.CreateDictionary<string, TUnitOrigin>;
   FCandidateCache := TCollections.CreateDictionary<string, TCandidates>;
   FSearchPathCache := TCollections.CreateDictionary<string, TCachedResolution>;
 end;
@@ -255,6 +261,7 @@ begin
   entry.Origin := origin;
   FSearchPaths.Add(entry);
   FPathIndexes.Add(nil);
+  FFolderOrigins[LowerCase(normalised)] := origin;
   InvalidateCaches;
 end;
 
@@ -413,6 +420,7 @@ function TUnitResolver.TryResolve(const unitName : string; const referencingFile
 var
   explicitPath : string;
   referencingFolder : string;
+  referencingOrigin : TUnitOrigin;
   candidates : TCandidates;
   wantSource : boolean;
 begin
@@ -434,6 +442,10 @@ begin
   if referencingFile <> '' then
     referencingFolder := NormaliseFolder(ExtractFilePath(referencingFile));
 
+  // a folder no search path names is the project's own, eg one given by an in clause
+  if not FFolderOrigins.TryGetValue(LowerCase(referencingFolder), referencingOrigin) then
+    referencingOrigin := uoProject;
+
   candidates := CandidatesFor(unitName);
 
   // Source is worth more than a dcu wherever it is: a dcu ends the walk, so we would
@@ -442,7 +454,7 @@ begin
   begin
     // 2. the folder of the unit doing the using
     if (referencingFolder <> '') and
-       ProbeIndex(FolderIndex(referencingFolder), candidates, wantSource, uoProject, resolved) then
+       ProbeIndex(FolderIndex(referencingFolder), candidates, wantSource, referencingOrigin, resolved) then
       Exit(true);
 
     // 3. the search paths, in order
