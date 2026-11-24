@@ -74,6 +74,21 @@ type
     [TestCase('not T', 'tsTrue,tsFalse')]
     [TestCase('not U', 'tsUnknown,tsUnknown')]
     procedure NotFollowsKleeneLogic(const value : string; const expected : string);
+
+    [Test]
+    [TestCase('typo',       'tsTreu')]
+    [TestCase('empty',      '')]
+    [TestCase('other enum', 'cvDelphi13')]
+    procedure AnUnknownNameIsAnError(const value : string);
+
+    [Test]
+    [TestCase('typo',       'tsTreu')]
+    [TestCase('empty',      '')]
+    [TestCase('other enum', 'cvDelphi13')]
+    procedure TheErrorNamesTheUnknownName(const value : string);
+
+    [Test]
+    procedure EveryNameReadsBackAsItsValue;
   end;
 
 implementation
@@ -84,8 +99,16 @@ uses
   DUA.Types;
 
 function ToTriState(const value : string) : TTriState;
+const
+  EnumLow = Ord(Low(TTriState));
+  EnumHigh = Ord(High(TTriState));
+var
+  ordinal : integer;
 begin
-  result := TTriState(GetEnumValue(TypeInfo(TTriState), value));
+  ordinal := GetEnumValue(TypeInfo(TTriState), value);
+  if (ordinal < EnumLow) or (ordinal > EnumHigh) then
+    raise EArgumentException.CreateFmt('"%s" is not a TTriState name', [value]);
+  result := TTriState(ordinal);
 end;
 
 function TriStateName(const value : TTriState) : string;
@@ -106,6 +129,38 @@ end;
 procedure TTriStateTests.NotFollowsKleeneLogic(const value : string; const expected : string);
 begin
   Assert.AreEqual(expected, TriStateName(TriStateNot(ToTriState(value))));
+end;
+
+procedure TTriStateTests.AnUnknownNameIsAnError(const value : string);
+begin
+  Assert.WillRaise(
+    procedure
+    begin
+      ToTriState(value);
+    end, EArgumentException);
+end;
+
+procedure TTriStateTests.TheErrorNamesTheUnknownName(const value : string);
+var
+  message : string;
+begin
+  message := '';
+  try
+    ToTriState(value);
+  except
+    on e : EArgumentException do
+      message := e.Message;
+  end;
+
+  Assert.Contains(message, '"' + value + '" is not a TTriState name');
+end;
+
+procedure TTriStateTests.EveryNameReadsBackAsItsValue;
+var
+  state : TTriState;
+begin
+  for state := Low(TTriState) to High(TTriState) do
+    Assert.AreEqual<integer>(Ord(state), Ord(ToTriState(TriStateName(state))), TriStateName(state));
 end;
 
 procedure TTriStateTests.PatternMatchingFollowsGlobRules(const pattern : string;

@@ -110,6 +110,20 @@ type
     [TestCase('finished',  'apFinished|99|0|Scanned 99 units', '|')]
     procedure ScanDescriptionReadsSensibly(const phase : string; const scanned : integer;
                                            const queued : integer; const expected : string);
+
+    [Test]
+    [TestCase('typo',       'apScaning')]
+    [TestCase('empty',      '')]
+    [TestCase('other enum', 'tsTrue')]
+    procedure AnUnknownNameIsAnError(const value : string);
+
+    [Test]
+    [TestCase('typo',       'apScaning')]
+    [TestCase('empty',      '')]
+    [TestCase('other enum', 'tsTrue')]
+    procedure TheErrorNamesTheUnknownName(const value : string);
+
+    [Test] procedure EveryNameReadsBackAsItsValue;
   end;
 
 implementation
@@ -566,11 +580,59 @@ begin
   Assert.IsTrue(RunWithProgress(nil).Graph.Nodes.Count > 0);
 end;
 
+function ToPhase(const value : string) : TAnalyzerPhase;
+const
+  EnumLow = Ord(Low(TAnalyzerPhase));
+  EnumHigh = Ord(High(TAnalyzerPhase));
+var
+  ordinal : integer;
+begin
+  ordinal := GetEnumValue(TypeInfo(TAnalyzerPhase), value);
+  if (ordinal < EnumLow) or (ordinal > EnumHigh) then
+    raise EArgumentException.CreateFmt('"%s" is not a TAnalyzerPhase name', [value]);
+  result := TAnalyzerPhase(ordinal);
+end;
+
 procedure TAnalyzerProgressTests.ScanDescriptionReadsSensibly(const phase : string;
   const scanned : integer; const queued : integer; const expected : string);
 begin
-  Assert.AreEqual(expected, TConsoleReport.ScanDescription(
-    TAnalyzerPhase(GetEnumValue(TypeInfo(TAnalyzerPhase), phase)), scanned, queued));
+  Assert.AreEqual(expected, TConsoleReport.ScanDescription(ToPhase(phase), scanned, queued));
+end;
+
+procedure TAnalyzerProgressTests.AnUnknownNameIsAnError(const value : string);
+begin
+  Assert.WillRaise(
+    procedure
+    begin
+      ToPhase(value);
+    end, EArgumentException);
+end;
+
+procedure TAnalyzerProgressTests.TheErrorNamesTheUnknownName(const value : string);
+var
+  message : string;
+begin
+  message := '';
+  try
+    ToPhase(value);
+  except
+    on e : EArgumentException do
+      message := e.Message;
+  end;
+
+  Assert.Contains(message, '"' + value + '" is not a TAnalyzerPhase name');
+end;
+
+procedure TAnalyzerProgressTests.EveryNameReadsBackAsItsValue;
+var
+  phase : TAnalyzerPhase;
+  name : string;
+begin
+  for phase := Low(TAnalyzerPhase) to High(TAnalyzerPhase) do
+  begin
+    name := GetEnumName(TypeInfo(TAnalyzerPhase), Ord(phase));
+    Assert.AreEqual<integer>(Ord(phase), Ord(ToPhase(name)), name);
+  end;
 end;
 
 initialization
