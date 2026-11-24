@@ -84,8 +84,16 @@ uses
   DUA.Types;
 
 function ToTriState(const value : string) : TTriState;
+const
+  EnumLow = Ord(Low(TTriState));
+  EnumHigh = Ord(High(TTriState));
+var
+  ordinal : integer;
 begin
-  result := TTriState(GetEnumValue(TypeInfo(TTriState), value));
+  ordinal := GetEnumValue(TypeInfo(TTriState), value);
+  if (ordinal < EnumLow) or (ordinal > EnumHigh) then
+    raise EArgumentException.CreateFmt('"%s" is not a TTriState name', [value]);
+  result := TTriState(ordinal);
 end;
 
 function TriStateName(const value : TTriState) : string;

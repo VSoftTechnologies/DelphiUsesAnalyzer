@@ -151,8 +151,16 @@ uses
   System.TypInfo;
 
 function ToCompiler(const value : string) : TCompilerVersion;
+const
+  EnumLow = Ord(Low(TCompilerVersion));
+  EnumHigh = Ord(High(TCompilerVersion));
+var
+  ordinal : integer;
 begin
-  result := TCompilerVersion(GetEnumValue(TypeInfo(TCompilerVersion), value));
+  ordinal := GetEnumValue(TypeInfo(TCompilerVersion), value);
+  if (ordinal < EnumLow) or (ordinal > EnumHigh) then
+    raise EArgumentException.CreateFmt('"%s" is not a TCompilerVersion name', [value]);
+  result := TCompilerVersion(ordinal);
 end;
 
 function CompilerName(const value : TCompilerVersion) : string;
@@ -161,8 +169,16 @@ begin
 end;
 
 function ToPlatform(const value : string) : TDelphiPlatform;
+const
+  EnumLow = Ord(Low(TDelphiPlatform));
+  EnumHigh = Ord(High(TDelphiPlatform));
+var
+  ordinal : integer;
 begin
-  result := TDelphiPlatform(GetEnumValue(TypeInfo(TDelphiPlatform), value));
+  ordinal := GetEnumValue(TypeInfo(TDelphiPlatform), value);
+  if (ordinal < EnumLow) or (ordinal > EnumHigh) then
+    raise EArgumentException.CreateFmt('"%s" is not a TDelphiPlatform name', [value]);
+  result := TDelphiPlatform(ordinal);
 end;
 
 function PlatformName(const value : TDelphiPlatform) : string;

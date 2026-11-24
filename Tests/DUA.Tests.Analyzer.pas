@@ -566,11 +566,23 @@ begin
   Assert.IsTrue(RunWithProgress(nil).Graph.Nodes.Count > 0);
 end;
 
+function ToPhase(const value : string) : TAnalyzerPhase;
+const
+  EnumLow = Ord(Low(TAnalyzerPhase));
+  EnumHigh = Ord(High(TAnalyzerPhase));
+var
+  ordinal : integer;
+begin
+  ordinal := GetEnumValue(TypeInfo(TAnalyzerPhase), value);
+  if (ordinal < EnumLow) or (ordinal > EnumHigh) then
+    raise EArgumentException.CreateFmt('"%s" is not a TAnalyzerPhase name', [value]);
+  result := TAnalyzerPhase(ordinal);
+end;
+
 procedure TAnalyzerProgressTests.ScanDescriptionReadsSensibly(const phase : string;
   const scanned : integer; const queued : integer; const expected : string);
 begin
-  Assert.AreEqual(expected, TConsoleReport.ScanDescription(
-    TAnalyzerPhase(GetEnumValue(TypeInfo(TAnalyzerPhase), phase)), scanned, queued));
+  Assert.AreEqual(expected, TConsoleReport.ScanDescription(ToPhase(phase), scanned, queued));
 end;
 
 initialization
