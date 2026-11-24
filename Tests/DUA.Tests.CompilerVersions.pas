@@ -94,6 +94,21 @@ type
     [TestCase('11',  '19.5')]
     [TestCase('xe2', '13.4')]
     procedure UnambiguousProjectVersionsAreNotFlagged(const value : string);
+
+    [Test]
+    [TestCase('typo',       'cvDelphy13')]
+    [TestCase('empty',      '')]
+    [TestCase('other enum', 'dpWin32')]
+    procedure AnUnknownNameIsAnError(const value : string);
+
+    [Test]
+    [TestCase('typo',       'cvDelphy13')]
+    [TestCase('empty',      '')]
+    [TestCase('other enum', 'dpWin32')]
+    procedure TheErrorNamesTheUnknownName(const value : string);
+
+    [Test]
+    procedure EveryNameReadsBackAsItsValue;
   end;
 
   [TestFixture]
@@ -115,6 +130,21 @@ type
     [TestCase('win64', 'dpWin64,Win64')]
     [TestCase('linux', 'dpLinux64,Linux64')]
     procedure FormatsPlatformNames(const value : string; const expected : string);
+
+    [Test]
+    [TestCase('typo',       'dpWin23')]
+    [TestCase('empty',      '')]
+    [TestCase('other enum', 'cvDelphi13')]
+    procedure AnUnknownNameIsAnError(const value : string);
+
+    [Test]
+    [TestCase('typo',       'dpWin23')]
+    [TestCase('empty',      '')]
+    [TestCase('other enum', 'cvDelphi13')]
+    procedure TheErrorNamesTheUnknownName(const value : string);
+
+    [Test]
+    procedure EveryNameReadsBackAsItsValue;
   end;
 
   [TestFixture]
@@ -250,6 +280,38 @@ begin
   Assert.AreEqual('', candidates);
 end;
 
+procedure TCompilerVersionTests.AnUnknownNameIsAnError(const value : string);
+begin
+  Assert.WillRaise(
+    procedure
+    begin
+      ToCompiler(value);
+    end, EArgumentException);
+end;
+
+procedure TCompilerVersionTests.TheErrorNamesTheUnknownName(const value : string);
+var
+  message : string;
+begin
+  message := '';
+  try
+    ToCompiler(value);
+  except
+    on e : EArgumentException do
+      message := e.Message;
+  end;
+
+  Assert.Contains(message, '"' + value + '" is not a TCompilerVersion name');
+end;
+
+procedure TCompilerVersionTests.EveryNameReadsBackAsItsValue;
+var
+  version : TCompilerVersion;
+begin
+  for version := Low(TCompilerVersion) to High(TCompilerVersion) do
+    Assert.AreEqual<integer>(Ord(version), Ord(ToCompiler(CompilerName(version))), CompilerName(version));
+end;
+
 { TPlatformTests }
 
 procedure TPlatformTests.ParsesPlatformNames(const value : string; const expected : string);
@@ -260,6 +322,38 @@ end;
 procedure TPlatformTests.FormatsPlatformNames(const value : string; const expected : string);
 begin
   Assert.AreEqual(expected, TDelphiPlatforms.ToName(ToPlatform(value)));
+end;
+
+procedure TPlatformTests.AnUnknownNameIsAnError(const value : string);
+begin
+  Assert.WillRaise(
+    procedure
+    begin
+      ToPlatform(value);
+    end, EArgumentException);
+end;
+
+procedure TPlatformTests.TheErrorNamesTheUnknownName(const value : string);
+var
+  message : string;
+begin
+  message := '';
+  try
+    ToPlatform(value);
+  except
+    on e : EArgumentException do
+      message := e.Message;
+  end;
+
+  Assert.Contains(message, '"' + value + '" is not a TDelphiPlatform name');
+end;
+
+procedure TPlatformTests.EveryNameReadsBackAsItsValue;
+var
+  platform : TDelphiPlatform;
+begin
+  for platform := Low(TDelphiPlatform) to High(TDelphiPlatform) do
+    Assert.AreEqual<integer>(Ord(platform), Ord(ToPlatform(PlatformName(platform))), PlatformName(platform));
 end;
 
 { TCompilerDefineTests }
